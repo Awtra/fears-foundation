@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Mobile frame harness</title>
+    <style>
+      /* Review harness only. Chrome enforces a minimum window width (~500px) even
+         in headless, so `--window-size=390` crops instead of reflowing. An iframe
+         gets its own viewport, so media queries inside it evaluate against a true
+         390px. The whole page is rendered in the iframe and a clip window is moved
+         over it with CSS, which needs no script access to the frame (so it works
+         over file:// as well as http://).
+
+         ?off=3200  → show the page starting 3200px down
+         ?scale=... → override the zoom */
+      html,
+      body {
+        margin: 0;
+        background: #05070c;
+      }
+      .stage {
+        width: 600px;
+        padding: 16px 16px 0;
+      }
+      .label {
+        font: 11px/1.4 ui-monospace, monospace;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: #7c8ba1;
+        margin: 0 0 10px;
+      }
+      /* Visible window onto the mobile page */
+      .clip {
+        position: relative;
+        width: 562px; /* 390 x 1.44 */
+        height: 2000px;
+        overflow: hidden;
+        border: 1px solid #2d2438;
+        background: #0b0f19;
+      }
+      .frame {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 390px;
+        height: 8300px; /* full height of the mobile layout */
+        border: 0;
+        transform: scale(1.44);
+        transform-origin: top left;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="stage">
+      <p class="label" id="label">390 x 1389 mobile viewport</p>
+      <div class="clip" id="clip">
+        <iframe class="frame" id="frame" title="Fears Foundation mobile review"></iframe>
+      </div>
+    </div>
+    <script>
+      const params = new URLSearchParams(window.location.search);
+      const off = Number(params.get('off') || 0);
+      const scale = Number(params.get('scale') || 1.44);
+      const height = Number(params.get('h') || 1389); /* mobile viewport height to show */
+
+      const frame = document.getElementById('frame');
+      const clip = document.getElementById('clip');
+
+      frame.style.transform = `scale(${scale})`;
+      frame.style.top = `${-off * scale}px`;
+      clip.style.width = `${390 * scale}px`;
+      clip.style.height = `${height * scale}px`;
+
+      const end = Math.min(off + height, 8300);
+      document.getElementById('label').textContent =
+        `390 wide · y ${off} to ${end} · scale ${scale}`;
+
+      frame.src = '../preview.html';
+    </script>
+  </body>
+</html>
