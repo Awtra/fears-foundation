@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="The Fears Foundation">
+  <!-- Brand mark: sharp 4px geometry, deep slate canvas, royal purple hairline -->
+  <defs>
+    <linearGradient id="ffPlum" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#6B21A8" stop-opacity="0.55" />
+      <stop offset="100%" stop-color="#581C87" stop-opacity="0" />
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="4" fill="#0F172A" />
+  <rect width="64" height="64" rx="4" fill="url(#ffPlum)" />
+  <rect x="1" y="1" width="62" height="62" rx="3.5" fill="none" stroke="#6B21A8" stroke-opacity="0.55" stroke-width="1.5" />
+  <text
+    x="32"
+    y="42"
+    text-anchor="middle"
+    font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace"
+    font-size="24"
+    font-weight="600"
+    letter-spacing="-1"
+    fill="#FFFFFF"
+  >FF</text>
+</svg>
