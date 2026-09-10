@@ -4,26 +4,30 @@ export default {
   theme: {
     extend: {
       colors: {
-        /* Canvas - deep slate blues */
-        canvas: '#0B0F19',
+        /* Canvas - warm paper, light theme */
+        canvas: '#FAF9F6',
         surface: {
-          DEFAULT: '#0F172A',
-          raised: '#141D33',
-          inset: '#080B13',
+          DEFAULT: '#FFFFFF',
+          raised: '#FFFFFF',
+          inset: '#F1EFEA',
         },
-        /* Accent - deep royal purple, used only as ambient glow / border / active state */
+        /* Ink - deep slate for text and structure on light */
+        ink: '#0F172A',
+        /* Accent - deep royal purple. On light, `glow` is the violet used for
+           text accents (AA-verified), `plum`/`light` for fills and borders. */
         plum: {
           DEFAULT: '#581C87',
           light: '#6B21A8',
-          glow: '#A855F7',
+          glow: '#7C3AED',
         },
-        /* Type - #7C8BA1 clears WCAG AA (≥4.5:1) on both canvas and raised surface */
-        silver: '#94A3B8',
-        muted: '#7C8BA1',
+        /* Type - #475569 body and #5F6B7D muted both clear WCAG AA on paper */
+        silver: '#475569',
+        muted: '#5F6B7D',
       },
       fontFamily: {
-        sans: ['Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'Segoe UI', 'sans-serif'],
-        display: ['"Instrument Serif"', 'ui-serif', 'Georgia', 'Cambria', 'serif'],
+        sans: ['Manrope', 'ui-sans-serif', 'system-ui', '-apple-system', 'Segoe UI', 'sans-serif'],
+        display: ['Fraunces', 'ui-serif', 'Georgia', 'Cambria', 'serif'],
+        caps: ['Jost', 'ui-sans-serif', 'system-ui', 'sans-serif'],
         mono: ['"IBM Plex Mono"', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
       },
       borderRadius: {
@@ -38,13 +42,13 @@ export default {
       },
       backgroundImage: {
         'plum-ambient':
-          'radial-gradient(60% 60% at 50% 0%, rgba(88,28,135,0.35) 0%, rgba(11,15,25,0) 100%)',
+          'radial-gradient(60% 60% at 50% 0%, rgba(124,58,237,0.14) 0%, rgba(250,249,246,0) 100%)',
         'plum-edge':
-          'linear-gradient(135deg, rgba(107,33,168,0.55) 0%, rgba(88,28,135,0.05) 45%, rgba(11,15,25,0) 100%)',
+          'linear-gradient(135deg, rgba(107,33,168,0.28) 0%, rgba(88,28,135,0.04) 45%, rgba(250,249,246,0) 100%)',
       },
       boxShadow: {
-        card: '0 1px 0 0 rgba(255,255,255,0.03) inset, 0 24px 60px -40px rgba(0,0,0,0.9)',
-        portal: '0 18px 40px -22px rgba(88,28,135,0.9)',
+        card: '0 1px 0 0 rgba(15,23,42,0.02) inset, 0 1px 2px 0 rgba(15,23,42,0.04), 0 24px 60px -48px rgba(15,23,42,0.28)',
+        portal: '0 18px 40px -24px rgba(88,28,135,0.55)',
       },
       keyframes: {
         'pulse-node': {

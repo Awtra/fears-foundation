@@ -3,11 +3,11 @@
 @tailwind utilities;
 
 /* ------------------------------------------------------------------
- Base layer - global canvas, focus discipline, reduced-motion safety
- ------------------------------------------------------------------ */
+   Base layer - global canvas, focus discipline, reduced-motion safety
+   ------------------------------------------------------------------ */
 @layer base {
   :root {
-    color-scheme: dark;
+    color-scheme: light;
   }
 
   html {
@@ -18,20 +18,19 @@
   }
 
   body {
-    @apply bg-canvas text-silver font-sans antialiased;
+    @apply bg-canvas font-sans text-silver antialiased;
     text-rendering: optimizeLegibility;
     font-feature-settings: 'cv11', 'ss01';
-    font-variation-settings: 'opsz' 32;
   }
 
   ::selection {
-    background-color: rgba(107, 33, 168, 0.55);
-    color: #ffffff;
+    background-color: rgba(124, 58, 237, 0.22);
+    color: #0f172a;
   }
 
   /* Sharp, unified focus ring - never removed, only restyled */
   :focus-visible {
-    outline: 2px solid #a855f7;
+    outline: 2px solid #7c3aed;
     outline-offset: 2px;
     border-radius: 2px;
   }
@@ -39,19 +38,19 @@
   /* Hairline scrollbar to match the geometry */
   * {
     scrollbar-width: thin;
-    scrollbar-color: #1e293b transparent;
+    scrollbar-color: #d4d2cb transparent;
   }
   *::-webkit-scrollbar {
     width: 10px;
     height: 10px;
   }
   *::-webkit-scrollbar-thumb {
-    background-color: #1e293b;
-    border: 3px solid #0b0f19;
+    background-color: #d4d2cb;
+    border: 3px solid #faf9f6;
     border-radius: 4px;
   }
   *::-webkit-scrollbar-thumb:hover {
-    background-color: #334155;
+    background-color: #b9b6ac;
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -69,13 +68,14 @@
 }
 
 /* ------------------------------------------------------------------
- Components layer - reusable, non-bloating composition primitives
- ------------------------------------------------------------------ */
+   Components layer - reusable, non-bloating composition primitives
+   ------------------------------------------------------------------ */
 @layer components {
   /* Text that sits on a hairline rule, used for section eyebrows/labels.
- Tracking tightens on small screens so long eyebrows do not wrap awkwardly. */
+     One consistent tone (violet accent) across every section - the review
+     flagged mixed eyebrow colors; this token is the single source. */
   .rule-label {
-    @apply flex items-center gap-3 text-[11px] font-medium uppercase tracking-[0.16em] text-muted sm:tracking-eyebrow;
+    @apply flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-plum-glow sm:tracking-eyebrow;
   }
   .rule-label::before {
     content: '';

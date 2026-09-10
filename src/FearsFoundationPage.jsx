@@ -1,48 +1,61 @@
 /**
  * =============================================================================
- * THE FEARS FOUNDATION - biography & scholarship portfolio
- * Dr. Constance Y. Fears, JD, PhD
+ *  THE FEARS FOUNDATION - biography & scholarship portfolio
+ *  Dr. Constance Y. Fears, JD, PhD
  * =============================================================================
  *
- * Surface archetype: DECIDE / LEARN (one idea per section; a hero is correct)
- * Aesthetic: high-end luxury tech × academic prestige
- * Canvas: #0B0F19 / #0F172A Accent: #581C87 / #6B21A8 (ambient only)
- * Geometry: max 4px radius, hairline borders, 8-point spacing rhythm
+ *  Surface archetype:  DECIDE / LEARN  (one idea per section; a hero is correct)
+ *  Aesthetic:          warm paper canvas, deep-ink type, restrained royal purple
+ *  Canvas:             #FAF9F6   Ink: #0F172A   Accent: #581C87 / #7C3AED
+ *  Geometry:           max 4px radius, hairline borders, 8-point spacing rhythm
  *
- * Module map (single-file by design - each block is independently extractable):
- * § 1 Design constants & content model (all copy sourced from client material)
- * § 2 Hooks (scroll state, active section, scroll util)
- * § 3 Composition primitives (Eyebrow, SectionHeading, Tag, CTA, Glow)
- * § 4 Global navigation (sticky + backdrop-blur + mobile drawer)
- * § 5 Profile hero (split-screen, credential rail)
- * § 6 The Polymath Timeline (3-track responsive rail grid)
- * § 7 The Fears Foundation Hub (3-card portfolio + impact sub-widget)
- * § 8 Personal footer block (community presence, advocate interests)
- * § 9 Page composition (section shells, skip link, ARIA wiring)
+ *  v2 changes from client review (Sep 2026):
+ *    - Light theme replaces dark; contrast lifted (violet text accents, AA-checked)
+ *    - Hero name set uniformly (no serif italic); serif accents reserved for
+ *      section headlines where emphasis is earned
+ *    - Type system: Manrope (UI) + Fraunces (display) + Jost (wide-tracked caps)
+ *    - Timeline discipline numbers replaced with inline SVG glyphs
+ *    - One consistent eyebrow/subheading color across every section
+ *    - Mission statement (draft) + mission pull-quote treatment
+ *    - "SCHOLARSHIPS OPEN" banner band (from the review's font reference)
+ *    - New Scholarship Recipients route with 2023 testimonials, verbatim
  *
- * Every string below maps directly to the supplied client raw material. No
- * invented metrics, no placeholder logic, no unstyled defaults.
+ *  Module map (single-file by design - each block is independently extractable):
+ *    § 1  Design constants & content model
+ *    § 2  Hooks                              (scroll state, active section, routing)
+ *    § 3  Composition primitives             (Eyebrow, SectionHeading, Tag, CTA, Glow)
+ *    § 4  Global navigation                  (sticky + backdrop-blur + mobile drawer)
+ *    § 5  Profile hero                       (split-screen, uniform name)
+ *    § 6  The Polymath Timeline              (3-track rail, discipline glyphs)
+ *    § 7  The Fears Foundation Hub           (3-card portfolio + impact sub-widget)
+ *    § 8  Scholarship Recipients             (hash-routed page, 2023 testimonials)
+ *    § 9  Personal footer block
+ *    § 10 Page composition                   (route switch, ARIA wiring)
+ *
+ *  Every string below maps directly to the supplied client raw material. No
+ *  invented metrics, no placeholder logic, no unstyled defaults. No em dashes.
  * =============================================================================
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 /* ==========================================================================
- § 1 - DESIGN CONSTANTS & CONTENT MODEL
- ========================================================================== */
+   § 1 - DESIGN CONSTANTS & CONTENT MODEL
+   ========================================================================== */
 
 /** Height of the sticky masthead, in px - used to offset in-page anchor scrolls. */
 const NAV_OFFSET_PX = 76;
 
-/** Single source of truth for navigation + the IntersectionObserver watch list. */
+/** Navigation destinations. `page: true` marks a hash route instead of a section. */
 const NAV_LINKS = [
   { id: 'about', label: 'About' },
   { id: 'timeline', label: 'Timeline' },
   { id: 'scholarships', label: 'Scholarships' },
+  { id: 'recipients', label: 'Recipients', page: true },
   { id: 'apply', label: 'Apply' },
 ];
 
-/** The six disciplines that define the brief: JD · PhD · Scientist · Attorney · Entrepreneur · Educator */
+/** The six disciplines that define the brief. */
 const CREDENTIAL_MARKS = ['JD', 'PhD', 'Scientist', 'Attorney', 'Entrepreneur', 'Educator'];
 
 const HERO_STATS = [
@@ -54,7 +67,7 @@ const HERO_STATS = [
   {
     value: '06',
     label: 'Scholarship programs',
-    detail: 'From K–12 students through graduate law study',
+    detail: 'From K-12 students through graduate law study',
   },
   {
     value: '04',
@@ -90,10 +103,10 @@ const PRACTICE_SNAPSHOT = [
   { role: 'Global subject-matter expert', meta: 'cGMP & quality systems' },
 ];
 
+/* Timeline discipline glyphs are keyed by track id in §3. */
 const TIMELINE_TRACKS = [
   {
     id: 'science',
-    index: '01',
     name: 'Science',
     summary: 'From the bench to the federal regulator',
     entries: [
@@ -123,7 +136,6 @@ const TIMELINE_TRACKS = [
   },
   {
     id: 'law',
-    index: '02',
     name: 'Law',
     summary: 'Jurisprudence applied to regulated industry',
     entries: [
@@ -144,7 +156,6 @@ const TIMELINE_TRACKS = [
   },
   {
     id: 'industry',
-    index: '03',
     name: 'Industry & Academia',
     summary: 'Compliance leadership, teaching, and enterprise',
     entries: [
@@ -177,7 +188,6 @@ const TIMELINE_TRACKS = [
 const SCHOLARSHIP_CARDS = [
   {
     id: 'stem',
-    index: '01',
     kicker: 'STEM Hub',
     title: 'STEM Scholarships',
     description:
@@ -200,7 +210,6 @@ const SCHOLARSHIP_CARDS = [
   },
   {
     id: 'law',
-    index: '02',
     kicker: 'Higher Ed & Law Hub',
     title: 'Higher Education & Law',
     description:
@@ -219,15 +228,14 @@ const SCHOLARSHIP_CARDS = [
   },
   {
     id: 'k12',
-    index: '03',
-    kicker: 'K–12 & Community Impact',
-    title: 'K–12 & Community Impact',
+    kicker: 'K-12 & Community Impact',
+    title: 'K-12 & Community Impact',
     description:
       'Early-stage support that reduces financial barriers for students before college, widening the range of career paths they can reach.',
     awards: [
       {
         name: 'Dr. Constance Y. Fears Scholarship',
-        institution: 'K–12 Students',
+        institution: 'K-12 Students',
       },
     ],
     impact: {
@@ -235,6 +243,31 @@ const SCHOLARSHIP_CARDS = [
       fields: ['Respiratory Therapy', 'Nursing', 'Aviation Science & Management'],
     },
     cta: { label: 'Apply Now', href: '#scholarship-portal' },
+  },
+];
+
+/* Verbatim from polymathregconsultants.com/founder - the 2023 recipients page. */
+const RECIPIENTS = [
+  {
+    name: 'Emmanuel C.',
+    major: 'Respiratory Therapy (AS)',
+    quote:
+      'The support you have shown me and indubitably have shown to others shows that you, too, have the personal commission to give. Every day, fewer people seem to be interested in exhibiting this level of unselfishness. I thank you for sharing when there was no requirement to do so. Thank you!',
+    signoff: 'Emmanuel',
+  },
+  {
+    name: 'Hope A.',
+    major: 'Pre-Licensure BSN',
+    quote:
+      "I'm truly grateful for the scholarship I've been awarded. Nursing school is already expensive, and for some of the burden to be taken off my shoulders is a blessing that I can't stop saying thank you for!",
+    signoff: 'Hope',
+  },
+  {
+    name: 'Joshua G.',
+    major: 'Aviation Science & Management (BS)',
+    quote:
+      'It means so much to me that you decided to contribute to my education. You know, you could do so many things with your money, but instead, you chose to share it with me. I am so grateful for your kindness. I will honor your generosity by continuing to work hard to be successful. Thank you so much, for helping to open the doors of opportunity to my path of becoming a pilot.',
+    signoff: 'Joshua',
   },
 ];
 
@@ -258,16 +291,16 @@ const FOOTER_ADVOCACY = ['STEM education', 'Environmental conservation', 'Human 
 /* Decorative precision grid - hairline blueprint texture, never interactive. */
 const GRID_TEXTURE = {
   backgroundImage:
-    'linear-gradient(to right, rgba(148,163,184,0.07) 1px, transparent 1px), linear-gradient(to bottom, rgba(148,163,184,0.07) 1px, transparent 1px)',
+    'linear-gradient(to right, rgba(15,23,42,0.045) 1px, transparent 1px), linear-gradient(to bottom, rgba(15,23,42,0.045) 1px, transparent 1px)',
   backgroundSize: '72px 72px',
-  maskImage: 'radial-gradient(72% 62% at 50% 0%, #000 0%, rgba(0,0,0,0.35) 55%, transparent 100%)',
+  maskImage: 'radial-gradient(72% 62% at 50% 0%, #000 0%, rgba(0,0,0,0.25) 55%, transparent 100%)',
   WebkitMaskImage:
-    'radial-gradient(72% 62% at 50% 0%, #000 0%, rgba(0,0,0,0.35) 55%, transparent 100%)',
+    'radial-gradient(72% 62% at 50% 0%, #000 0%, rgba(0,0,0,0.25) 55%, transparent 100%)',
 };
 
 /* ==========================================================================
- § 2 - HOOKS
- ========================================================================== */
+   § 2 - HOOKS
+   ========================================================================== */
 
 /** True once the viewport has scrolled past `threshold` - drives masthead elevation. */
 function useScrolled(threshold = 12) {
@@ -348,6 +381,40 @@ function useEscapeToClose(open, onClose) {
 }
 
 /**
+ * Reads the current route from the hash: `#recipients` maps to the recipients
+ * page; anything else is the home page. `onNavigate` is called on every change
+ * so the shell can reset scroll.
+ */
+function useHashRoute(onNavigate) {
+  const read = () =>
+    typeof window !== 'undefined' && window.location.hash === '#recipients' ? 'recipients' : 'home';
+
+  const [route, setRoute] = useState(read);
+
+  useEffect(() => {
+    const onHashChange = () => {
+      setRoute(read());
+      onNavigate?.();
+    };
+
+    window.addEventListener('hashchange', onHashChange);
+    return () => window.removeEventListener('hashchange', onHashChange);
+  }, [onNavigate]);
+
+  return route;
+}
+
+/** Navigate to the recipients route (top of page, hash set). */
+function goToRecipients() {
+  if (typeof window === 'undefined') return;
+  if (window.location.hash === '#recipients') {
+    window.scrollTo({ top: 0, behavior: 'auto' });
+    return;
+  }
+  window.location.hash = 'recipients';
+}
+
+/**
  * Offset-aware in-page scroll that respects `prefers-reduced-motion`
  * and keeps the URL hash in sync without a native jump.
  */
@@ -371,25 +438,19 @@ function scrollToSection(id) {
 }
 
 /* ==========================================================================
- § 3 - COMPOSITION PRIMITIVES
- ========================================================================== */
+   § 3 - COMPOSITION PRIMITIVES
+   ========================================================================== */
 
-/** Hairline eyebrow label - gradient rule + tracked uppercase micro-type. */
-function Eyebrow({ children, className = '', tone = 'muted' }) {
-  const tones = {
-    muted: 'text-muted',
-    plum: 'text-plum-glow/90',
-    silver: 'text-silver',
-  };
-
+/** Hairline eyebrow label - one consistent violet tone across every section. */
+function Eyebrow({ children, className = '' }) {
   return (
-    <p className={`rule-label ${tones[tone] ?? tones.muted} ${className}`}>
+    <p className={`rule-label ${className}`}>
       <span>{children}</span>
     </p>
   );
 }
 
-/** Section heading block: eyebrow + display headline + optional lede. Locks the type hierarchy. */
+/** Section heading block: eyebrow + display headline + optional lede. */
 function SectionHeading({ eyebrow, title, accent, lede, id, align = 'left' }) {
   return (
     <header
@@ -402,13 +463,13 @@ function SectionHeading({ eyebrow, title, accent, lede, id, align = 'left' }) {
 
       <h2
         id={id}
-        className="mt-5 text-balance text-3xl font-semibold leading-[1.08] tracking-tight text-white sm:text-4xl lg:text-[2.75rem]"
+        className="mt-5 text-balance text-3xl font-semibold leading-[1.08] tracking-tight text-ink sm:text-4xl lg:text-[2.75rem]"
       >
         {title}
         {accent ? (
           <>
             {' '}
-            <span className="font-display italic font-normal text-white/70">{accent}</span>
+            <span className="font-display italic font-normal text-plum-glow">{accent}</span>
           </>
         ) : null}
       </h2>
@@ -425,13 +486,13 @@ function SectionHeading({ eyebrow, title, accent, lede, id, align = 'left' }) {
 /** Sharp-cornered tag - used for credential marks and interest chips. */
 function Tag({ children, tone = 'neutral', className = '' }) {
   const tones = {
-    neutral: 'border-white/10 bg-white/[0.03] text-silver',
-    plum: 'border-plum-glow/25 bg-plum/[0.12] text-white/90',
+    neutral: 'border-ink/10 bg-ink/[0.03] text-silver',
+    plum: 'border-plum/25 bg-plum/[0.07] text-plum-light',
   };
 
   return (
     <span
-      className={`inline-flex items-center rounded-sharp border px-2.5 py-1 text-[11px] font-medium uppercase tracking-[0.14em] ${
+      className={`inline-flex items-center rounded-sharp border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] ${
         tones[tone] ?? tones.neutral
       } ${className}`}
     >
@@ -446,15 +507,14 @@ const CTA_BASE =
 /* Colour/border treatments - padding lives in CTA_SIZES so sizes never collide. */
 const CTA_VARIANTS = {
   /* Highest contrast - reserved for portal entry */
-  solid: 'bg-white text-canvas hover:bg-slate-200',
+  solid: 'bg-ink text-white hover:bg-slate-700',
   /* Restrained secondary */
-  outline: 'border border-white/15 text-white hover:border-plum-glow/60 hover:bg-plum/10',
-  /* Card-level action: full width, sharp, ambient plum on hover. Border and fill
-     sit a step above the card surface so the control still reads as a button on
-     small screens, where value contrast is lowest. */
-  card: 'w-full border border-white/[0.18] bg-white/[0.06] text-white hover:border-plum-glow/60 hover:bg-plum/25',
-  /* Ambient portal bar */
-  portal: 'border border-plum-glow/40 bg-plum-light/90 text-white hover:bg-plum-light',
+  outline: 'border border-ink/15 text-ink hover:border-plum-glow/60 hover:bg-plum/[0.06]',
+  /* Card-level action: full width, sharp, ambient plum on hover */
+  card: 'w-full border border-ink/[0.15] bg-ink/[0.04] text-ink hover:border-plum-glow/50 hover:bg-plum/[0.08]',
+  /* On-dark variant for the SCHOLARSHIPS OPEN band */
+  onDark: 'bg-white text-ink hover:bg-violet-100',
+  onDarkOutline: 'border border-white/30 text-white hover:border-white/60 hover:bg-white/10',
 };
 
 /* One padding decision per control height. */
@@ -465,36 +525,118 @@ const CTA_SIZES = {
 };
 
 /** Forward arrow glyph - transform-only motion, disabled under reduced-motion by CSS. */
-function ArrowGlyph() {
+function ArrowGlyph({ className = '' }) {
   return (
     <span
       aria-hidden="true"
-      className="transition-transform duration-200 group-hover:translate-x-0.5"
+      className={`transition-transform duration-200 group-hover:translate-x-0.5 ${className}`}
     >
       →
     </span>
   );
 }
 
-/** Ambient purple bloom. Decorative only - always aria-hidden, never a layout node. */
+/** Ambient violet bloom. Decorative only - always aria-hidden, never a layout node. */
 function PlumGlow({ className = '' }) {
   return (
     <div
       aria-hidden="true"
-      className={`pointer-events-none absolute rounded-sharp bg-plum/25 blur-[120px] ${className}`}
+      className={`pointer-events-none absolute rounded-sharp bg-plum-glow/10 blur-[120px] ${className}`}
     />
   );
 }
 
+/* ------------------------------------------------------------------
+   Timeline discipline glyphs - inline SVG, 1.5px stroke, currentColor.
+   Replaces the 01/02/03 mono indices per client review (point 8).
+   ------------------------------------------------------------------ */
+
+function FlaskGlyph() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="h-[18px] w-[18px]"
+    >
+      <path d="M9.5 3h5" />
+      <path d="M10.5 3v5.4L4.9 17.2A2 2 0 0 0 6.6 20h10.8a2 2 0 0 0 1.7-2.8L13.5 8.4V3" />
+      <path d="M7.3 14.5h9.4" />
+    </svg>
+  );
+}
+
+function ScalesGlyph() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="h-[18px] w-[18px]"
+    >
+      <path d="M12 3v18" />
+      <path d="M7 21h10" />
+      <path d="M7.5 6.5 4.6 12a2.4 2.4 0 0 0 5.8 0l-2.9-5.5Z" />
+      <path d="M16.5 6.5 13.6 12a2.4 2.4 0 0 0 5.8 0l-2.9-5.5Z" />
+    </svg>
+  );
+}
+
+function FactoryGlyph() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="h-[18px] w-[18px]"
+    >
+      <path d="M3 21V9.5l5 3V9.5l5 3V9.5l5 3V21" />
+      <path d="M3 21h18" />
+      <path d="M7 17h2M11.5 17h2M16 17h2" />
+      <path d="M7 12.5v-2M7 9.5v-2" />
+    </svg>
+  );
+}
+
+const TRACK_GLYPHS = {
+  science: FlaskGlyph,
+  law: ScalesGlyph,
+  industry: FactoryGlyph,
+};
+
+function TrackGlyph({ id }) {
+  const Glyph = TRACK_GLYPHS[id] ?? FlaskGlyph;
+  return (
+    <span
+      aria-hidden="true"
+      className="grid h-8 w-8 shrink-0 place-items-center rounded-sharp border border-plum/25 bg-plum/[0.07] text-plum-light"
+    >
+      <Glyph />
+    </span>
+  );
+}
+
 /* ==========================================================================
- § 4 - GLOBAL NAVIGATION
- ========================================================================== */
+   § 4 - GLOBAL NAVIGATION
+   ========================================================================== */
 
 function FearsMark({ className = '' }) {
   return (
     <span
       aria-hidden="true"
-      className={`grid h-9 w-9 shrink-0 place-items-center rounded-sharp border border-plum-glow/35 bg-gradient-to-br from-plum-light/45 to-transparent font-mono text-[11px] font-medium tracking-tight text-white ${className}`}
+      className={`grid h-9 w-9 shrink-0 place-items-center rounded-sharp border border-plum/30 bg-gradient-to-br from-plum-light/25 to-transparent font-mono text-[11px] font-medium tracking-tight text-plum-light ${className}`}
     >
       FF
     </span>
@@ -530,18 +672,22 @@ function Navbar({ activeId }) {
     };
   }, [menuOpen, closeMenu]);
 
-  const handleNavClick = (event, id) => {
+  const handleNavClick = (event, link) => {
     event.preventDefault();
     closeMenu();
-    scrollToSection(id);
+    if (link.page) {
+      goToRecipients();
+      return;
+    }
+    scrollToSection(link.id);
   };
 
   return (
     <header
       className={`sticky top-0 z-50 border-b transition-colors duration-300 ${
         scrolled
-          ? 'border-white/[0.08] bg-canvas/80 backdrop-blur-xl supports-[backdrop-filter]:bg-canvas/65'
-          : 'border-transparent bg-canvas/55 backdrop-blur-lg supports-[backdrop-filter]:bg-canvas/40'
+          ? 'border-ink/[0.07] bg-canvas/85 backdrop-blur-xl supports-[backdrop-filter]:bg-canvas/75'
+          : 'border-transparent bg-canvas/60 backdrop-blur-lg supports-[backdrop-filter]:bg-canvas/45'
       }`}
     >
       <nav
@@ -552,13 +698,13 @@ function Navbar({ activeId }) {
         {/* Wordmark */}
         <a
           href="#about"
-          onClick={(event) => handleNavClick(event, 'about')}
+          onClick={(event) => handleNavClick(event, NAV_LINKS[0])}
           className="flex items-center gap-3 rounded-sharp"
           aria-label="The Fears Foundation home"
         >
           <FearsMark />
           <span className="flex flex-col leading-none">
-            <span className="text-[11px] font-semibold uppercase tracking-eyebrow text-white sm:text-[12px]">
+            <span className="font-caps text-[11px] font-semibold uppercase tracking-eyebrow text-ink sm:text-[12px]">
               The Fears Foundation
             </span>
             <span className="mt-1 hidden font-mono text-[10px] uppercase tracking-[0.18em] text-muted sm:block">
@@ -574,11 +720,11 @@ function Navbar({ activeId }) {
             return (
               <li key={link.id}>
                 <a
-                  href={`#${link.id}`}
-                  onClick={(event) => handleNavClick(event, link.id)}
+                  href={link.page ? '#recipients' : `#${link.id}`}
+                  onClick={(event) => handleNavClick(event, link)}
                   aria-current={isActive ? 'true' : undefined}
                   className={`relative rounded-sharp px-3 py-2 text-[13px] font-medium transition-colors duration-200 ${
-                    isActive ? 'text-white' : 'text-silver hover:text-white'
+                    isActive ? 'text-ink' : 'text-silver hover:text-ink'
                   }`}
                 >
                   {link.label}
@@ -601,7 +747,7 @@ function Navbar({ activeId }) {
           </span>
           <a
             href="#apply"
-            onClick={(event) => handleNavClick(event, 'apply')}
+            onClick={(event) => handleNavClick(event, NAV_LINKS[4])}
             className={`${CTA_BASE} ${CTA_VARIANTS.solid} ${CTA_SIZES.sm}`}
           >
             Scholar Portal
@@ -616,7 +762,7 @@ function Navbar({ activeId }) {
           aria-expanded={menuOpen}
           aria-controls="mobile-nav-drawer"
           aria-label={menuOpen ? 'Close navigation menu' : 'Open navigation menu'}
-          className="inline-flex h-10 w-10 items-center justify-center rounded-sharp border border-white/[0.12] text-white transition-colors duration-200 hover:border-plum-glow/50 hover:bg-plum/10 lg:hidden"
+          className="inline-flex h-10 w-10 items-center justify-center rounded-sharp border border-ink/[0.12] text-ink transition-colors duration-200 hover:border-plum-glow/50 hover:bg-plum/[0.06] lg:hidden"
         >
           <span aria-hidden="true" className="relative block h-3 w-4">
             <span
@@ -641,21 +787,21 @@ function Navbar({ activeId }) {
       {/* Mobile drawer - grid-rows transition avoids max-height layout hacks */}
       <div
         id="mobile-nav-drawer"
-        className={`grid overflow-hidden border-t border-white/[0.06] bg-canvas/95 backdrop-blur-xl transition-[grid-template-rows,opacity] duration-300 lg:hidden ${
+        className={`grid overflow-hidden border-t border-ink/[0.06] bg-canvas/98 backdrop-blur-xl transition-[grid-template-rows,opacity] duration-300 lg:hidden ${
           menuOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
         }`}
       >
         <div className="min-h-0">
-          <ul className="shell flex flex-col divide-y divide-white/[0.06] py-2">
+          <ul className="shell flex flex-col divide-y divide-ink/[0.06] py-2">
             {NAV_LINKS.map((link) => (
               <li key={link.id}>
                 <a
-                  href={`#${link.id}`}
-                  onClick={(event) => handleNavClick(event, link.id)}
+                  href={link.page ? '#recipients' : `#${link.id}`}
+                  onClick={(event) => handleNavClick(event, link)}
                   aria-current={activeId === link.id ? 'true' : undefined}
                   tabIndex={menuOpen ? 0 : -1}
                   className={`flex items-center justify-between py-3.5 text-sm font-medium transition-colors ${
-                    activeId === link.id ? 'text-white' : 'text-silver hover:text-white'
+                    activeId === link.id ? 'text-ink' : 'text-silver hover:text-ink'
                   }`}
                 >
                   {link.label}
@@ -669,7 +815,7 @@ function Navbar({ activeId }) {
           <div className="shell pb-5 pt-1">
             <a
               href="#apply"
-              onClick={(event) => handleNavClick(event, 'apply')}
+              onClick={(event) => handleNavClick(event, NAV_LINKS[4])}
               tabIndex={menuOpen ? 0 : -1}
               className={`${CTA_BASE} ${CTA_VARIANTS.solid} ${CTA_SIZES.md} w-full`}
             >
@@ -684,19 +830,19 @@ function Navbar({ activeId }) {
 }
 
 /* ==========================================================================
- § 5 - PROFILE HERO
- ========================================================================== */
+   § 5 - PROFILE HERO
+   ========================================================================== */
 
 function CredentialRail() {
   return (
-    <div className="relative overflow-hidden rounded-card border border-white/[0.08] bg-surface/70 p-6 shadow-card sm:p-7">
+    <div className="relative overflow-hidden rounded-card border border-ink/[0.08] bg-white/80 p-6 shadow-card sm:p-7">
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-plum-glow/45 to-transparent"
+        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-plum-glow/40 to-transparent"
       />
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute -right-16 -top-24 h-56 w-56 rounded-sharp bg-plum/25 blur-[90px]"
+        className="pointer-events-none absolute -right-16 -top-24 h-56 w-56 rounded-sharp bg-plum-glow/15 blur-[90px]"
       />
 
       {/* Academic credentials */}
@@ -704,14 +850,14 @@ function CredentialRail() {
         <div className="flex items-baseline justify-between gap-4">
           <h2
             id="credentials-heading"
-            className="text-[11px] font-semibold uppercase tracking-eyebrow text-white"
+            className="text-[11px] font-semibold uppercase tracking-eyebrow text-plum-glow"
           >
             Academic Credentials
           </h2>
           <span className="font-mono text-[10px] tracking-[0.18em] text-muted">04</span>
         </div>
 
-        <ul className="mt-5 divide-y divide-white/[0.06] border-t border-white/[0.06]">
+        <ul className="mt-5 divide-y divide-ink/[0.06] border-t border-ink/[0.06]">
           {ACADEMIC_CREDENTIALS.map((item, index) => (
             <li key={item.degree} className="group flex gap-4 py-4">
               <span
@@ -721,7 +867,7 @@ function CredentialRail() {
                 {String(index + 1).padStart(2, '0')}
               </span>
               <div className="min-w-0">
-                <p className="text-[14px] font-medium leading-snug text-white">{item.degree}</p>
+                <p className="text-[14px] font-semibold leading-snug text-ink">{item.degree}</p>
                 <p className="mt-1 text-[12.5px] leading-relaxed text-silver">{item.institution}</p>
                 {item.note ? (
                   <p className="mt-1.5 text-[11px] uppercase tracking-[0.12em] text-muted">
@@ -735,24 +881,21 @@ function CredentialRail() {
       </section>
 
       {/* Practice snapshot */}
-      <section
-        aria-labelledby="snapshot-heading"
-        className="mt-7 border-t border-white/[0.06] pt-6"
-      >
+      <section aria-labelledby="snapshot-heading" className="mt-7 border-t border-ink/[0.06] pt-6">
         <div className="flex items-baseline justify-between gap-4">
           <h2
             id="snapshot-heading"
-            className="text-[11px] font-semibold uppercase tracking-eyebrow text-white"
+            className="text-[11px] font-semibold uppercase tracking-eyebrow text-plum-glow"
           >
             Practice Snapshot
           </h2>
           <span className="font-mono text-[10px] tracking-[0.18em] text-muted">04</span>
         </div>
 
-        <dl className="mt-5 grid grid-cols-1 gap-px overflow-hidden rounded-sharp border border-white/[0.06] bg-white/[0.06] sm:grid-cols-2">
+        <dl className="mt-5 grid grid-cols-1 gap-px overflow-hidden rounded-sharp border border-ink/[0.06] bg-ink/[0.05] sm:grid-cols-2">
           {PRACTICE_SNAPSHOT.map((item) => (
             <div key={item.role} className="bg-canvas/80 p-4">
-              <dt className="text-[12.5px] font-medium leading-snug text-white">{item.role}</dt>
+              <dt className="text-[12.5px] font-semibold leading-snug text-ink">{item.role}</dt>
               <dd className="mt-1.5 text-[11px] uppercase tracking-[0.12em] text-muted">
                 {item.meta}
               </dd>
@@ -764,12 +907,33 @@ function CredentialRail() {
   );
 }
 
+/** Mission statement pull-quote on the About section. Draft copy - see DRAFT tag. */
+function MissionStatement() {
+  return (
+    <blockquote className="relative mt-10 max-w-2xl border-l-2 border-plum-glow/60 bg-plum/[0.05] py-6 pl-6 pr-6">
+      <p className="font-display text-[1.35rem] italic leading-snug text-ink">
+        &ldquo;The Fears Foundation exists to reduce financial barriers, create educational
+        opportunities, and encourage every student to pursue ambitious academic and professional
+        goals.&rdquo;
+      </p>
+      <footer className="mt-3 flex flex-wrap items-center gap-3">
+        <span className="text-[12px] font-semibold uppercase tracking-[0.14em] text-plum-light">
+          The Fears Foundation
+        </span>
+        <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted">
+          Draft copy · pending Dr. Fears' approval
+        </span>
+      </footer>
+    </blockquote>
+  );
+}
+
 function ProfileHero() {
   return (
     <section
       id="about"
       aria-labelledby="hero-heading"
-      className="relative overflow-hidden border-b border-white/[0.06] pb-20 pt-16 sm:pt-20 lg:pb-28 lg:pt-24"
+      className="relative overflow-hidden border-b border-ink/[0.06] pb-20 pt-16 sm:pt-20 lg:pb-28 lg:pt-24"
     >
       {/* Ambient layers */}
       <div
@@ -777,25 +941,25 @@ function ProfileHero() {
         className="pointer-events-none absolute inset-0"
         style={GRID_TEXTURE}
       />
-      <PlumGlow className="-top-40 left-1/2 h-[560px] w-[560px] -translate-x-1/2 opacity-60" />
-      <PlumGlow className="-right-24 top-24 h-[420px] w-[420px] opacity-30" />
+      <PlumGlow className="-top-40 left-1/2 h-[560px] w-[560px] -translate-x-1/2 opacity-70" />
+      <PlumGlow className="-right-24 top-24 h-[420px] w-[420px] opacity-50" />
 
       <div className="shell relative">
         <div className="grid grid-cols-1 items-start gap-14 lg:grid-cols-12 lg:gap-16">
           {/* ---- Left: narrative column ---- */}
           <div className="lg:col-span-7 xl:col-span-7">
-            <Eyebrow tone="plum">The Fears Foundation · Atlanta, Georgia</Eyebrow>
+            <Eyebrow>The Fears Foundation · Atlanta, Georgia</Eyebrow>
 
             <h1
               id="hero-heading"
               /* Fluid ramp: holds at 2.05rem on a 320px phone, scales to the 4.25rem
- desktop cap by ~790px, so no breakpoint ever clips the name. */
-              className="mt-6 text-[clamp(2.05rem,8.6vw,4.25rem)] font-semibold leading-[1.03] tracking-[-0.03em] text-white"
+                 desktop cap by ~790px, so no breakpoint ever clips the name.
+                 Uniform face per review: no serif accent on the surname. */
+              className="mt-6 text-[clamp(2.05rem,8.6vw,4.25rem)] font-semibold leading-[1.03] tracking-[-0.03em] text-ink"
             >
               Dr. Constance
-              <br className="hidden sm:block" /> Y.{' '}
-              <span className="font-display italic font-normal">Fears</span>
-              <span className="mt-3 block font-mono text-[13px] font-normal uppercase tracking-[0.24em] text-silver/80 sm:text-sm">
+              <br className="hidden sm:block" /> Y. Fears
+              <span className="mt-4 block font-caps text-[13px] font-medium uppercase tracking-[0.28em] text-plum-glow sm:text-sm">
                 JD · PhD
               </span>
             </h1>
@@ -812,8 +976,11 @@ function ProfileHero() {
               and their own ambitions.
             </p>
 
+            {/* Mission statement - draft, pending client approval */}
+            <MissionStatement />
+
             {/* Credential marks */}
-            <ul className="mt-8 flex flex-wrap gap-2" aria-label="Professional disciplines">
+            <ul className="mt-9 flex flex-wrap gap-2" aria-label="Professional disciplines">
               {CREDENTIAL_MARKS.map((mark) => (
                 <li key={mark}>
                   <Tag tone={mark === 'JD' || mark === 'PhD' ? 'plum' : 'neutral'}>{mark}</Tag>
@@ -847,15 +1014,15 @@ function ProfileHero() {
             </div>
 
             {/* Verified figures drawn from the record */}
-            <dl className="mt-14 grid grid-cols-1 gap-px overflow-hidden rounded-card border border-white/[0.08] bg-white/[0.06] sm:grid-cols-3">
+            <dl className="mt-14 grid grid-cols-1 gap-px overflow-hidden rounded-card border border-ink/[0.08] bg-ink/[0.05] sm:grid-cols-3">
               {HERO_STATS.map((stat) => (
-                <div key={stat.label} className="bg-surface/80 p-5">
+                <div key={stat.label} className="bg-white/80 p-5">
                   <dt className="sr-only">{stat.label}</dt>
                   <dd>
-                    <span className="block font-display text-4xl leading-none text-white">
+                    <span className="block font-display text-4xl leading-none text-ink">
                       {stat.value}
                     </span>
-                    <span className="mt-3 block text-[11px] font-semibold uppercase tracking-[0.16em] text-white/80">
+                    <span className="mt-3 block text-[11px] font-semibold uppercase tracking-[0.16em] text-plum-glow">
                       {stat.label}
                     </span>
                     <span className="mt-2 block text-[12px] leading-relaxed text-muted">
@@ -868,7 +1035,7 @@ function ProfileHero() {
           </div>
 
           {/* ---- Right: credential rail (split-screen) ---- */}
-          <div className="lg:col-span-5 lg:border-l lg:border-white/[0.06] lg:pl-16 xl:col-span-5">
+          <div className="lg:col-span-5 lg:border-l lg:border-ink/[0.06] lg:pl-16 xl:col-span-5">
             <CredentialRail />
           </div>
         </div>
@@ -878,36 +1045,34 @@ function ProfileHero() {
 }
 
 /* ==========================================================================
- § 6 - THE POLYMATH TIMELINE
- ========================================================================== */
+   § 6 - THE POLYMATH TIMELINE
+   ========================================================================== */
 
 function TimelineTrack({ track }) {
   return (
     <article
       aria-labelledby={`track-${track.id}`}
-      className="flex h-full flex-col border-t border-white/[0.08] pt-7 lg:border-t-0 lg:border-l lg:border-white/[0.06] lg:pl-8 lg:pt-0 lg:first:border-l-0 lg:first:pl-0"
+      className="flex h-full flex-col border-t border-ink/[0.08] pt-7 lg:border-t-0 lg:border-l lg:border-ink/[0.06] lg:pl-8 lg:pt-0 lg:first:border-l-0 lg:first:pl-0"
     >
-      <div className="flex items-baseline gap-3">
-        <span className="font-mono text-[10px] tracking-[0.18em] text-plum-glow">
-          {track.index}
-        </span>
+      <div className="flex items-center gap-3">
+        <TrackGlyph id={track.id} />
         <h3
           id={`track-${track.id}`}
-          className="text-[15px] font-semibold uppercase tracking-[0.14em] text-white"
+          className="text-[15px] font-semibold uppercase tracking-[0.14em] text-ink"
         >
           {track.name}
         </h3>
       </div>
       <p className="mt-2 text-[12.5px] leading-relaxed text-muted">{track.summary}</p>
 
-      <ol className="relative mt-8 space-y-7 border-l border-white/[0.08] pl-6">
+      <ol className="relative mt-8 space-y-7 border-l border-ink/[0.1] pl-6">
         {track.entries.map((entry, index) => (
           <li key={`${track.id}-${entry.title}-${index}`} className="relative">
             <span
               aria-hidden="true"
-              className="absolute -left-[29px] top-1.5 block h-[9px] w-[9px] rounded-sharp border border-plum-glow/60 bg-plum-light/80 animate-pulse-node"
+              className="absolute -left-[29px] top-1.5 block h-[9px] w-[9px] rounded-sharp border border-plum/50 bg-plum/80 animate-pulse-node"
             />
-            <p className="text-[14px] font-medium leading-snug text-white">{entry.title}</p>
+            <p className="text-[14px] font-semibold leading-snug text-ink">{entry.title}</p>
             <p className="mt-1.5 text-[12.5px] leading-relaxed text-silver">{entry.org}</p>
             {entry.note ? (
               <p className="mt-2 text-[12px] leading-relaxed text-muted">{entry.note}</p>
@@ -924,9 +1089,9 @@ function PolymathTimeline() {
     <section
       id="timeline"
       aria-labelledby="timeline-heading"
-      className="relative scroll-mt-24 overflow-hidden border-b border-white/[0.06] py-20 lg:py-28"
+      className="relative scroll-mt-24 overflow-hidden border-b border-ink/[0.06] py-20 lg:py-28"
     >
-      <PlumGlow className="-left-40 top-1/3 h-[440px] w-[440px] opacity-25" />
+      <PlumGlow className="-left-40 top-1/3 h-[440px] w-[440px] opacity-40" />
 
       <div className="shell relative">
         <SectionHeading
@@ -943,7 +1108,7 @@ function PolymathTimeline() {
           ))}
         </div>
 
-        <p className="mt-14 border-t border-white/[0.06] pt-6 text-[12.5px] leading-relaxed text-muted">
+        <p className="mt-14 border-t border-ink/[0.06] pt-6 text-[12.5px] leading-relaxed text-muted">
           Additional academic service: Adjunct Regulatory Professor at Morehouse School of Medicine,
           teaching regulatory and medical-device topics to students and industry professionals, and
           presenting through the American Society for Quality.
@@ -954,14 +1119,14 @@ function PolymathTimeline() {
 }
 
 /* ==========================================================================
- § 7 - THE FEARS FOUNDATION HUB
- ========================================================================== */
+   § 7 - THE FEARS FOUNDATION HUB
+   ========================================================================== */
 
 function ImpactWidget({ heading, fields }) {
   return (
-    <div className="mt-6 rounded-sharp border border-plum-glow/20 bg-plum/[0.08] p-4">
+    <div className="mt-6 rounded-sharp border border-plum/15 bg-plum/[0.05] p-4">
       <div className="flex items-baseline justify-between gap-4">
-        <p className="text-[10.5px] font-semibold uppercase tracking-eyebrow text-plum-glow/90">
+        <p className="text-[10.5px] font-semibold uppercase tracking-eyebrow text-plum-light">
           {heading}
         </p>
         <span className="font-mono text-[10px] tracking-[0.18em] text-muted">
@@ -973,23 +1138,26 @@ function ImpactWidget({ heading, fields }) {
         {fields.map((field) => (
           <li
             key={field}
-            className="flex items-center gap-3 rounded-sharp border border-white/[0.06] bg-canvas/70 px-3 py-2.5"
+            className="flex items-center gap-3 rounded-sharp border border-ink/[0.06] bg-canvas/60 px-3 py-2.5"
           >
-            <span
-              aria-hidden="true"
-              className="h-1.5 w-1.5 shrink-0 rounded-sharp bg-plum-glow/80"
-            />
-            <span className="text-[12.5px] font-medium leading-snug text-white/95">{field}</span>
+            <span aria-hidden="true" className="h-1.5 w-1.5 shrink-0 rounded-sharp bg-plum" />
+            <span className="text-[12.5px] font-medium leading-snug text-ink/90">{field}</span>
           </li>
         ))}
       </ul>
 
-      {/* Decorative parity bar - signals scope, asserts no data */}
-      <div aria-hidden="true" className="mt-3.5 flex gap-1">
-        <span className="h-[3px] flex-1 bg-plum-light/70" />
-        <span className="h-[3px] flex-1 bg-plum-light/50" />
-        <span className="h-[3px] flex-1 bg-plum-light/30" />
-      </div>
+      {/* Path to the recipients page */}
+      <a
+        href="#recipients"
+        onClick={(event) => {
+          event.preventDefault();
+          goToRecipients();
+        }}
+        className="group mt-3.5 inline-flex items-center gap-2 rounded-sharp py-2 text-[12px] font-semibold text-plum-light transition-colors hover:text-plum-glow"
+      >
+        Meet the 2023 recipients
+        <ArrowGlyph />
+      </a>
     </div>
   );
 }
@@ -998,40 +1166,40 @@ function ScholarshipCard({ card }) {
   return (
     <article
       aria-labelledby={`card-${card.id}`}
-      className="group relative flex h-full flex-col overflow-hidden rounded-card border border-white/[0.08] bg-surface/70 p-6 shadow-card transition-colors duration-300 hover:border-plum-glow/40 sm:p-7"
+      className="group relative flex h-full flex-col overflow-hidden rounded-card border border-ink/[0.08] bg-white/80 p-6 shadow-card transition-colors duration-300 hover:border-plum/30 sm:p-7"
     >
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-plum-glow/35 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-plum-glow/40 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"
       />
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute -right-20 -top-24 h-52 w-52 rounded-sharp bg-plum/20 opacity-0 blur-[80px] transition-opacity duration-500 group-hover:opacity-100"
+        className="pointer-events-none absolute -right-20 -top-24 h-52 w-52 rounded-sharp bg-plum-glow/10 opacity-0 blur-[80px] transition-opacity duration-500 group-hover:opacity-100"
       />
 
       <header className="relative">
         <div className="flex items-center justify-between gap-4">
-          <p className="text-[10.5px] font-semibold uppercase tracking-eyebrow text-plum-glow/90">
+          <p className="text-[10.5px] font-semibold uppercase tracking-eyebrow text-plum-light">
             {card.kicker}
           </p>
           <span aria-hidden="true" className="font-mono text-[10px] tracking-[0.18em] text-muted">
-            {card.index}
+            {String(SCHOLARSHIP_CARDS.indexOf(card) + 1).padStart(2, '0')}
           </span>
         </div>
 
         <h3
           id={`card-${card.id}`}
-          className="mt-4 text-[21px] font-semibold leading-tight tracking-tight text-white sm:text-[22px]"
+          className="mt-4 text-[21px] font-semibold leading-tight tracking-tight text-ink sm:text-[22px]"
         >
           {card.title}
         </h3>
         <p className="mt-3.5 text-[13.5px] leading-relaxed text-silver">{card.description}</p>
       </header>
 
-      <ul className="relative mt-6 divide-y divide-white/10 border-t border-white/10">
+      <ul className="relative mt-6 divide-y divide-ink/10 border-t border-ink/10">
         {card.awards.map((award) => (
           <li key={`${award.name}-${award.institution}`} className="py-3.5">
-            <p className="text-[13.5px] font-medium leading-snug text-white/95">{award.name}</p>
+            <p className="text-[13.5px] font-medium leading-snug text-ink/90">{award.name}</p>
             <p className="mt-1.5 text-[11.5px] uppercase tracking-[0.12em] text-muted">
               {award.institution}
             </p>
@@ -1066,14 +1234,14 @@ function FoundationHub() {
     <section
       id="scholarships"
       aria-labelledby="scholarships-heading"
-      className="relative scroll-mt-24 overflow-hidden border-b border-white/[0.06] py-20 lg:py-28"
+      className="relative scroll-mt-24 overflow-hidden border-b border-ink/[0.06] py-20 lg:py-28"
     >
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0"
         style={GRID_TEXTURE}
       />
-      <PlumGlow className="-right-32 top-0 h-[480px] w-[480px] opacity-30" />
+      <PlumGlow className="-right-32 top-0 h-[480px] w-[480px] opacity-45" />
 
       <div className="shell relative">
         <SectionHeading
@@ -1090,25 +1258,34 @@ function FoundationHub() {
           ))}
         </div>
 
-        <p className="mt-10 max-w-3xl text-[14px] leading-relaxed text-silver">
-          Her scholarship work reflects a broader belief: that education can change the trajectory
-          of individuals, families, and communities.
-        </p>
+        {/* Mission pull-quote - the message the client asked to elevate */}
+        <blockquote className="mt-14 overflow-hidden rounded-card border border-plum/15 bg-plum/[0.06] p-8 sm:p-10">
+          <p className="mx-auto max-w-3xl text-center font-display text-2xl italic leading-[1.35] text-ink sm:text-[1.75rem]">
+            &ldquo;Her scholarship work reflects a broader belief: that education can change the
+            trajectory of individuals, families, and communities.&rdquo;
+          </p>
+        </blockquote>
 
-        {/* Apply ribbon - the destination for nav "Apply" and every card CTA */}
+        {/* SCHOLARSHIPS OPEN band - from the review's banner reference */}
         <div
           id="scholarship-portal"
-          className="mt-12 scroll-mt-28 rounded-card border border-white/[0.08] bg-surface/60 p-6 sm:p-7"
+          className="relative mt-12 scroll-mt-28 overflow-hidden rounded-card bg-ink p-8 shadow-portal sm:p-10"
         >
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute -right-24 -top-32 h-72 w-72 rounded-sharp bg-plum-glow/25 blur-[100px]"
+          />
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-plum-glow/60 to-transparent"
+          />
+
+          <div className="relative flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
             <div className="max-w-2xl">
-              <p className="text-[10.5px] font-semibold uppercase tracking-eyebrow text-plum-glow/90">
-                Scholar Portal
+              <p className="font-caps text-[clamp(1.5rem,4.5vw,2.5rem)] font-medium uppercase leading-none tracking-[0.18em] text-white">
+                Scholarships open
               </p>
-              <h3 className="mt-3 text-[19px] font-semibold leading-tight tracking-tight text-white sm:text-xl">
-                Ready to apply? Start with the requirements.
-              </h3>
-              <p className="mt-2.5 text-[13.5px] leading-relaxed text-silver">
+              <p className="mt-4 text-[13.5px] leading-relaxed text-slate-300">
                 Each program publishes its own eligibility criteria, deadlines, and submission
                 requirements through the awarding institution. Review the requirements for your
                 program before you begin.
@@ -1118,20 +1295,20 @@ function FoundationHub() {
             <div className="flex flex-col gap-3 sm:flex-row lg:shrink-0">
               <a
                 href="#scholarships"
-                className={`${CTA_BASE} ${CTA_VARIANTS.portal} ${CTA_SIZES.sm}`}
+                className={`${CTA_BASE} ${CTA_VARIANTS.onDark} ${CTA_SIZES.md}`}
               >
                 Enter Scholar Portal
                 <ArrowGlyph />
               </a>
               <a
-                href="#about"
+                href="#recipients"
                 onClick={(event) => {
                   event.preventDefault();
-                  scrollToSection('about');
+                  goToRecipients();
                 }}
-                className={`${CTA_BASE} ${CTA_VARIANTS.outline} ${CTA_SIZES.md}`}
+                className={`${CTA_BASE} ${CTA_VARIANTS.onDarkOutline} ${CTA_SIZES.md}`}
               >
-                About Dr. Fears
+                Meet the Recipients
               </a>
             </div>
           </div>
@@ -1142,8 +1319,101 @@ function FoundationHub() {
 }
 
 /* ==========================================================================
- § 8 - PERSONAL FOOTER BLOCK
- ========================================================================== */
+   § 8 - SCHOLARSHIP RECIPIENTS (hash route)
+   ========================================================================== */
+
+function RecipientCard({ recipient, index }) {
+  return (
+    <article
+      aria-labelledby={`recipient-${index}`}
+      className="relative flex h-full flex-col rounded-card border border-ink/[0.08] bg-white/80 p-7 shadow-card sm:p-8"
+    >
+      <span
+        aria-hidden="true"
+        className="absolute inset-y-0 left-0 w-[3px] bg-gradient-to-b from-plum-glow to-plum-light"
+      />
+      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+        <h3 id={`recipient-${index}`} className="text-[17px] font-semibold tracking-tight text-ink">
+          {recipient.name}
+        </h3>
+        <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-plum-light">
+          {recipient.major}
+        </span>
+      </div>
+
+      <blockquote className="mt-5 flex-1">
+        <p className="font-display text-[1.15rem] italic leading-[1.6] text-silver">
+          &ldquo;{recipient.quote}&rdquo;
+        </p>
+      </blockquote>
+
+      <p className="mt-6 font-mono text-[11px] uppercase tracking-[0.16em] text-muted">
+        - {recipient.signoff}
+      </p>
+    </article>
+  );
+}
+
+function RecipientsPage() {
+  return (
+    <section
+      id="recipients"
+      aria-labelledby="recipients-heading"
+      className="relative overflow-hidden border-b border-ink/[0.06] py-20 lg:py-28"
+    >
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0"
+        style={GRID_TEXTURE}
+      />
+      <PlumGlow className="-left-32 top-16 h-[440px] w-[440px] opacity-40" />
+
+      <div className="shell relative">
+        <SectionHeading
+          id="recipients-heading"
+          eyebrow="Scholarship Recipients"
+          title="In their own words,"
+          accent="three recipients"
+          lede="In 2023, scholarship recipients pursued fields including Respiratory Therapy, Nursing, and Aviation Science & Management, demonstrating the range of students and career paths this support has helped advance."
+        />
+
+        <div className="mt-14 grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-7">
+          {RECIPIENTS.map((recipient, index) => (
+            <RecipientCard key={recipient.name} recipient={recipient} index={index} />
+          ))}
+        </div>
+
+        <div className="mt-12 flex flex-col gap-3 sm:flex-row sm:items-center">
+          <a
+            href="#scholarships"
+            onClick={(event) => {
+              event.preventDefault();
+              scrollToSection('scholarships');
+            }}
+            className={`${CTA_BASE} ${CTA_VARIANTS.solid} ${CTA_SIZES.md} w-full sm:w-auto`}
+          >
+            Back to the Scholarship Portfolio
+            <ArrowGlyph />
+          </a>
+          <a
+            href="#scholarship-portal"
+            onClick={(event) => {
+              event.preventDefault();
+              scrollToSection('scholarship-portal');
+            }}
+            className={`${CTA_BASE} ${CTA_VARIANTS.outline} ${CTA_SIZES.md} w-full sm:w-auto`}
+          >
+            View Application Requirements
+          </a>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ==========================================================================
+   § 9 - PERSONAL FOOTER BLOCK
+   ========================================================================== */
 
 function FoundationFooter() {
   const year = new Date().getFullYear();
@@ -1153,7 +1423,7 @@ function FoundationFooter() {
       <h2 id="footer-heading" className="sr-only">
         Community presence and personal interests
       </h2>
-      <PlumGlow className="-bottom-48 left-1/3 h-[420px] w-[420px] opacity-20" />
+      <PlumGlow className="-bottom-48 left-1/3 h-[420px] w-[420px] opacity-35" />
 
       <div className="shell relative">
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 lg:gap-10">
@@ -1161,7 +1431,7 @@ function FoundationFooter() {
           <div className="lg:col-span-4">
             <div className="flex items-center gap-3">
               <FearsMark />
-              <span className="text-[11px] font-semibold uppercase tracking-eyebrow text-white">
+              <span className="font-caps text-[11px] font-semibold uppercase tracking-eyebrow text-ink">
                 The Fears Foundation
               </span>
             </div>
@@ -1176,16 +1446,16 @@ function FoundationFooter() {
 
           {/* Community & professional presence */}
           <div className="lg:col-span-4">
-            <h3 className="text-[10.5px] font-semibold uppercase tracking-eyebrow text-white">
+            <h3 className="text-[10.5px] font-semibold uppercase tracking-eyebrow text-plum-light">
               Community &amp; Professional
             </h3>
-            <ul className="mt-5 divide-y divide-white/[0.06] border-t border-white/[0.06]">
+            <ul className="mt-5 divide-y divide-ink/[0.06] border-t border-ink/[0.06]">
               {FOOTER_COMMUNITY.map((item) => (
                 <li
                   key={item.name}
                   className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 py-3"
                 >
-                  <span className="text-[13px] font-medium text-white/95">{item.name}</span>
+                  <span className="text-[13px] font-medium text-ink/90">{item.name}</span>
                   <span className="text-[11px] uppercase tracking-[0.12em] text-muted">
                     {item.note}
                   </span>
@@ -1196,7 +1466,7 @@ function FoundationFooter() {
 
           {/* Personal */}
           <div className="lg:col-span-4">
-            <h3 className="text-[10.5px] font-semibold uppercase tracking-eyebrow text-white">
+            <h3 className="text-[10.5px] font-semibold uppercase tracking-eyebrow text-plum-light">
               Beyond the Work
             </h3>
             <ul className="mt-5 flex flex-wrap gap-2">
@@ -1207,7 +1477,7 @@ function FoundationFooter() {
               ))}
             </ul>
 
-            <h3 className="mt-8 text-[10.5px] font-semibold uppercase tracking-eyebrow text-white">
+            <h3 className="mt-8 text-[10.5px] font-semibold uppercase tracking-eyebrow text-plum-light">
               Advocacy
             </h3>
             <ul className="mt-4 space-y-2.5">
@@ -1215,7 +1485,7 @@ function FoundationFooter() {
                 <li key={cause} className="flex items-start gap-3 text-[13px] text-silver">
                   <span
                     aria-hidden="true"
-                    className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-sharp bg-plum-glow/70"
+                    className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-sharp bg-plum"
                   />
                   {cause}
                 </li>
@@ -1225,7 +1495,7 @@ function FoundationFooter() {
         </div>
 
         {/* Low-profile closure bar */}
-        <div className="mt-14 flex flex-col gap-4 border-t border-white/[0.06] py-7 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-14 flex flex-col gap-4 border-t border-ink/[0.06] py-7 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-[11.5px] text-muted">
             © {year} The Fears Foundation · Atlanta, Georgia
           </p>
@@ -1239,23 +1509,42 @@ function FoundationFooter() {
 }
 
 /* ==========================================================================
- § 9 - PAGE COMPOSITION
- ========================================================================== */
+   § 10 - PAGE COMPOSITION
+   ========================================================================== */
 
 export default function FearsFoundationPage() {
   /* Memoised so the observer effect never re-subscribes on re-render. */
-  const sectionIds = useMemo(() => NAV_LINKS.map((link) => link.id), []);
-  const activeId = useActiveSection(sectionIds);
+  const sectionIds = useMemo(
+    () => NAV_LINKS.filter((link) => !link.page).map((link) => link.id),
+    [],
+  );
+  const activeSection = useActiveSection(sectionIds);
+
+  const onRouteChange = useCallback(() => {
+    window.scrollTo({ top: 0, behavior: 'auto' });
+  }, []);
+
+  const route = useHashRoute(onRouteChange);
+
+  /* Nav highlight: recipients route pins the Recipients link; otherwise the
+     section observer owns the highlight. */
+  const activeId = route === 'recipients' ? 'recipients' : activeSection;
 
   return (
     <div className="min-h-screen bg-canvas">
       <Navbar activeId={activeId} />
 
-      <main id="main">
-        <ProfileHero />
-        <PolymathTimeline />
-        <FoundationHub />
-      </main>
+      {route === 'recipients' ? (
+        <main id="main">
+          <RecipientsPage />
+        </main>
+      ) : (
+        <main id="main">
+          <ProfileHero />
+          <PolymathTimeline />
+          <FoundationHub />
+        </main>
+      )}
 
       <FoundationFooter />
     </div>
