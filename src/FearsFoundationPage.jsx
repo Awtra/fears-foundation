@@ -49,10 +49,12 @@ const NAV_OFFSET_PX = 76;
 /** Navigation destinations. `page: true` marks a hash route instead of a section. */
 const NAV_LINKS = [
   { id: 'about', label: 'About' },
+  { id: 'foundation', label: 'Foundation' },
   { id: 'timeline', label: 'Timeline' },
   { id: 'scholarships', label: 'Scholarships' },
   { id: 'recipients', label: 'Recipients', page: true },
-  { id: 'apply', label: 'Apply' },
+  /* Apply targets the SCHOLARSHIPS OPEN band itself (id scholarship-portal). */
+  { id: 'scholarship-portal', label: 'Apply' },
 ];
 
 /** The six disciplines that define the brief. */
@@ -74,6 +76,25 @@ const HERO_STATS = [
     label: 'Degrees earned',
     detail: 'B.S. · Ph.D. · J.D. · Graduate Diploma in Law',
   },
+];
+
+/* ==========================================================================
+   Our Foundation - client-approved copy (Sep 2026). The motto is presented
+   bilingually per the team's direction; the five belief paragraphs anchor the
+   dedicated Foundation section.
+   ========================================================================== */
+const MOTTO = {
+  latin: 'Mens Humana Educatione Illustrata',
+  english: 'The Human Mind Illuminated Through Education',
+  note: "This motto reflects our conviction that education is among humanity's most powerful forces for personal growth, intellectual freedom, and social progress. Through learning, the human mind is illuminated, and through enlightened minds, the human condition is improved.",
+};
+
+const FOUNDATION_PARAGRAPHS = [
+  'The Fears Foundation was established on the belief that education is a basic human right and essential to improving the human condition.',
+  'We believe that access to education should never be determined by socioeconomic status, race, ethnicity, national origin, disability, geography, or circumstance. Every human being deserves the opportunity to learn, grow, discover, and realize their full potential.',
+  'While education is widely recognized for its economic benefits, we believe its value extends far beyond employment and income. Education is intrinsically valuable. It illuminates the human mind, cultivates wisdom, expands understanding, nurtures curiosity, and enriches the human experience. Knowledge is worth pursuing not only for what it enables us to do, but for who it enables us to become.',
+  'The advancement of human civilization has always depended upon learning. Education fosters scientific discovery, technological innovation, artistic expression, civic engagement, cultural understanding, and the pursuit of truth. It empowers individuals to think critically, engage thoughtfully with the world, and contribute meaningfully to society.',
+  'The Fears Foundation is committed to expanding educational opportunity from kindergarten through postgraduate study, supporting learners at every stage of their academic journey. We invest in education because we believe that enlightened minds create stronger communities, more just societies, and a better future for humanity.',
 ];
 
 const ACADEMIC_CREDENTIALS = [
@@ -648,6 +669,7 @@ function Navbar({ activeId }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const navRef = useRef(null);
   const closeMenu = useCallback(() => setMenuOpen(false), []);
+  const applyLink = NAV_LINKS.find((link) => link.id === 'scholarship-portal');
 
   useEscapeToClose(menuOpen, closeMenu);
 
@@ -746,8 +768,8 @@ function Navbar({ activeId }) {
             Scholarships open
           </span>
           <a
-            href="#apply"
-            onClick={(event) => handleNavClick(event, NAV_LINKS[4])}
+            href="#scholarship-portal"
+            onClick={(event) => handleNavClick(event, applyLink)}
             className={`${CTA_BASE} ${CTA_VARIANTS.solid} ${CTA_SIZES.sm}`}
           >
             Scholar Portal
@@ -814,8 +836,8 @@ function Navbar({ activeId }) {
           </ul>
           <div className="shell pb-5 pt-1">
             <a
-              href="#apply"
-              onClick={(event) => handleNavClick(event, NAV_LINKS[4])}
+              href="#scholarship-portal"
+              onClick={(event) => handleNavClick(event, applyLink)}
               tabIndex={menuOpen ? 0 : -1}
               className={`${CTA_BASE} ${CTA_VARIANTS.solid} ${CTA_SIZES.md} w-full`}
             >
@@ -907,27 +929,6 @@ function CredentialRail() {
   );
 }
 
-/** Mission statement pull-quote on the About section. Draft copy - see DRAFT tag. */
-function MissionStatement() {
-  return (
-    <blockquote className="relative mt-10 max-w-2xl border-l-2 border-plum-glow/60 bg-plum/[0.05] py-6 pl-6 pr-6">
-      <p className="font-display text-[1.35rem] italic leading-snug text-ink">
-        &ldquo;The Fears Foundation exists to reduce financial barriers, create educational
-        opportunities, and encourage every student to pursue ambitious academic and professional
-        goals.&rdquo;
-      </p>
-      <footer className="mt-3 flex flex-wrap items-center gap-3">
-        <span className="text-[12px] font-semibold uppercase tracking-[0.14em] text-plum-light">
-          The Fears Foundation
-        </span>
-        <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted">
-          Draft copy · pending Dr. Fears' approval
-        </span>
-      </footer>
-    </blockquote>
-  );
-}
-
 function ProfileHero() {
   return (
     <section
@@ -975,9 +976,6 @@ function ProfileHero() {
               commitment to learning, and now on removing the barriers that stand between students
               and their own ambitions.
             </p>
-
-            {/* Mission statement - draft, pending client approval */}
-            <MissionStatement />
 
             {/* Credential marks */}
             <ul className="mt-9 flex flex-wrap gap-2" aria-label="Professional disciplines">
@@ -1047,6 +1045,73 @@ function ProfileHero() {
 /* ==========================================================================
    § 6 - THE POLYMATH TIMELINE
    ========================================================================== */
+
+/* The dedicated Our Foundation section - motto display plus the five belief
+   paragraphs, on the editorial side (Decide/Learn) and intentionally airy. */
+function FoundationSection() {
+  const [openingParagraphs, closingParagraph] = [
+    FOUNDATION_PARAGRAPHS.slice(0, 4),
+    FOUNDATION_PARAGRAPHS[4],
+  ];
+
+  return (
+    <section
+      id="foundation"
+      aria-labelledby="foundation-heading"
+      className="relative scroll-mt-24 overflow-hidden border-b border-ink/[0.06] py-20 lg:py-28"
+    >
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0"
+        style={GRID_TEXTURE}
+      />
+      <PlumGlow className="-left-32 top-1/4 h-[440px] w-[440px] opacity-40" />
+
+      <div className="shell relative">
+        <SectionHeading
+          id="foundation-heading"
+          eyebrow="Our Foundation"
+          title="Education is a"
+          accent="human right"
+        />
+
+        {/* Motto - the brand signature, presented bilingually */}
+        <div className="mx-auto mt-16 max-w-3xl text-center">
+          <Eyebrow className="justify-center">Foundation Motto</Eyebrow>
+          <p className="mt-6 font-display text-3xl italic leading-tight text-ink sm:text-[2.75rem]">
+            {MOTTO.latin}
+          </p>
+          <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.22em] text-plum-light">
+            &ldquo;{MOTTO.english}&rdquo;
+          </p>
+          <div
+            aria-hidden="true"
+            className="mx-auto mt-8 h-px w-24 bg-gradient-to-r from-transparent via-plum-light/60 to-transparent"
+          />
+          <p className="mx-auto mt-6 max-w-xl text-[13px] leading-relaxed text-muted">
+            {MOTTO.note}
+          </p>
+        </div>
+
+        {/* Belief copy - two-column editorial grid, four paragraphs */}
+        <div className="mt-16 grid grid-cols-1 gap-x-14 gap-y-8 lg:grid-cols-2">
+          {openingParagraphs.map((paragraph, index) => (
+            <p key={index} className="text-[15px] leading-[1.85] text-silver">
+              {paragraph}
+            </p>
+          ))}
+        </div>
+
+        {/* Commitment closer - full width, slightly raised weight */}
+        <div className="mt-14 border-t border-ink/[0.06] pt-9">
+          <p className="max-w-3xl text-[16px] font-medium leading-[1.85] text-ink/90">
+            {closingParagraph}
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+}
 
 function TimelineTrack({ track }) {
   return (
@@ -1442,6 +1507,7 @@ function FoundationFooter() {
             <p className="mt-4 font-mono text-[10.5px] uppercase tracking-[0.18em] text-muted">
               Atlanta, Georgia
             </p>
+            <p className="mt-3 font-display text-[12.5px] italic text-plum-light">{MOTTO.latin}</p>
           </div>
 
           {/* Community & professional presence */}
@@ -1541,6 +1607,7 @@ export default function FearsFoundationPage() {
       ) : (
         <main id="main">
           <ProfileHero />
+          <FoundationSection />
           <PolymathTimeline />
           <FoundationHub />
         </main>

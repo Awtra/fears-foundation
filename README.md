@@ -22,8 +22,11 @@ npm run serve # http://localhost:4173
 | `npm run watch:css` / `watch:js` | Rebuild on change                                      |
 
 **`index.html`** is the deployable entry (external, cacheable assets).
-**`preview.html`** is the same page as one self-contained file - no sub-resources, no server, no
+**`preview.html`** is the same page as one self-contained file: no sub-resources, no server, no
 CDN. Safe to open from disk, attach to an email, or drop into a review pane.
+
+**`#recipients`** (hash route) is the Scholarship Recipients page with the 2023 testimonials.
+All copy, including these quotes, is verbatim from client-provided material.
 
 To port into an existing app: copy `src/FearsFoundationPage.jsx` and the `theme.extend` block from
 `tailwind.config.js`. The component has no dependencies beyond React - no icon library, no
@@ -59,7 +62,7 @@ shots/ Verification screenshots (desktop 1512 / mobile 390)
 | 8   | Footer        | `FoundationFooter`                                                                                                                              |
 | 9   | Composition   | `FearsFoundationPage` (default export)                                                                                                          |
 
-Splitting §4–§8 into `src/components/*.jsx` is a mechanical extraction - each module is already
+Splitting §4–§9 into `src/components/*.jsx` is a mechanical extraction - each module is already
 self-contained.
 
 ---
@@ -68,19 +71,21 @@ self-contained.
 
 | Token                               | Value                             | Use                                                       |
 | ----------------------------------- | --------------------------------- | --------------------------------------------------------- |
-| `canvas`                            | `#0B0F19`                         | Page background                                           |
-| `surface` / `raised` / `inset`      | `#0F172A` / `#141D33` / `#080B13` | Panels, tiles, insets                                     |
-| `plum` / `plum-light` / `plum-glow` | `#581C87` / `#6B21A8` / `#A855F7` | Ambient glow, borders, active state - never large fills   |
-| `silver`                            | `#94A3B8`                         | Body copy                                                 |
-| `muted`                             | `#7C8BA1`                         | Micro-labels, meta (lifted from slate-500 to clear AA)    |
+| `canvas` | `#FAF9F6` | Page background (warm paper, light theme) |
+| `surface` / `raised` / `inset` | `#FFFFFF` / `#FFFFFF` / `#F1EFEA` | Panels, tiles, insets |
+| `ink` | `#0F172A` | Headings and structure on light |
+| `plum` / `plum-light` / `plum-glow` | `#581C87` / `#6B21A8` / `#7C3AED` | Fills, borders, violet text accents (AA-verified) |
+| `silver` | `#475569` | Body copy (8:1 on paper) |
+| `muted` | `#5F6B7D` | Micro-labels, meta (AA on paper and white) |
 | `rounded-sharp` / `rounded-card`    | `2px` / `4px`                     | Hard ceiling on every radius, including decorative blooms |
-| `font-display`                      | Instrument Serif                  | Editorial italic accents in headings                      |
-| `font-sans`                         | Inter                             | Interface + body                                          |
-| `font-mono`                         | IBM Plex Mono                     | Indices, counts, micro-labels                             |
+| `font-display` | Fraunces | Editorial italic accents and the Latin motto |
+| `font-sans` | Manrope | Interface + body |
+| `font-caps` | Jost | Wide-tracked caps (SCHOLARSHIPS OPEN band, JD · PhD line) |
+| `font-mono` | IBM Plex Mono | Indices, counts, micro-labels |
 
-Purple is deliberately rationed: radial ambient blooms (`blur-[120px]`, `aria-hidden`), hairline
-gradients, hover borders, one active-nav underline, and the portal button. No purple-filled cards,
-no gradient text, no glassmorphism beyond the requested navbar blur.
+Violet is deliberately rationed: radial ambient blooms (`blur-[120px]`, `aria-hidden`), hairline
+gradients, hover borders, one active-nav underline, eyebrows, and the portal button. The Latin
+motto (Mens Humana Educatione Illustrata) is presented bilingually in the Our Foundation section.
 
 ---
 
