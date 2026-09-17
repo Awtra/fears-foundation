@@ -406,7 +406,7 @@ function useEscapeToClose(open, onClose) {
  * page; anything else is the home page. `onNavigate` is called on every change
  * so the shell can reset scroll.
  */
-function useHashRoute(onNavigate) {
+function useHashRoute(onRouteChange) {
   const read = () =>
     typeof window !== 'undefined' && window.location.hash === '#recipients' ? 'recipients' : 'home';
 
@@ -415,14 +415,47 @@ function useHashRoute(onNavigate) {
   useEffect(() => {
     const onHashChange = () => {
       setRoute(read());
-      onNavigate?.();
+      onRouteChange?.();
+    };
+
+    const onPopState = () => {
+      setRoute(read());
+      onRouteChange?.();
     };
 
     window.addEventListener('hashchange', onHashChange);
-    return () => window.removeEventListener('hashchange', onHashChange);
-  }, [onNavigate]);
+    window.addEventListener('popstate', onPopState);
+    return () => {
+      window.removeEventListener('hashchange', onHashChange);
+      window.removeEventListener('popstate', onPopState);
+    };
+  }, [onRouteChange]);
 
-  return route;
+  /** Imperative navigation. Returns early when the hash is unchanged so
+      same-page clicks never trigger a redundant route flip.
+
+      Uses history.pushState, NOT location.hash assignment: a hash
+      assignment makes the browser run its NATIVE anchor scroll, which (with
+      `scroll-behavior: smooth` on html) launches a smooth scroll that races
+      against and overrides the explicit post-render jump below. pushState
+      updates the URL silently (and keeps the back button working via popstate);
+      the shell owns the scroll. */
+  const navigate = useCallback((id) => {
+    if (typeof window === 'undefined') return;
+    const targetHash = id === 'recipients' ? '#recipients' : `#${id}`;
+    if (window.location.hash === targetHash) {
+      setRoute(read());
+      return;
+    }
+    window.history.pushState(
+      null,
+      '',
+      window.location.pathname + window.location.search + targetHash,
+    );
+    setRoute(read());
+  }, []);
+
+  return [route, navigate];
 }
 
 /** Navigate to the recipients route (top of page, hash set). */
@@ -664,11 +697,12 @@ function FearsMark({ className = '' }) {
   );
 }
 
-function Navbar({ activeId }) {
+function Navbar({ activeId, onNavClick }) {
   const scrolled = useScrolled(12);
   const [menuOpen, setMenuOpen] = useState(false);
   const navRef = useRef(null);
   const closeMenu = useCallback(() => setMenuOpen(false), []);
+  const aboutLink = NAV_LINKS.find((link) => link.id === 'about');
   const applyLink = NAV_LINKS.find((link) => link.id === 'scholarship-portal');
 
   useEscapeToClose(menuOpen, closeMenu);
@@ -697,11 +731,7 @@ function Navbar({ activeId }) {
   const handleNavClick = (event, link) => {
     event.preventDefault();
     closeMenu();
-    if (link.page) {
-      goToRecipients();
-      return;
-    }
-    scrollToSection(link.id);
+    onNavClick(link.id);
   };
 
   return (
@@ -720,7 +750,7 @@ function Navbar({ activeId }) {
         {/* Wordmark */}
         <a
           href="#about"
-          onClick={(event) => handleNavClick(event, NAV_LINKS[0])}
+          onClick={(event) => handleNavClick(event, aboutLink)}
           className="flex items-center gap-3 rounded-sharp"
           aria-label="The Fears Foundation home"
         >
@@ -1419,7 +1449,7 @@ function RecipientCard({ recipient, index }) {
   );
 }
 
-function RecipientsPage() {
+function RecipientsPage({ onNavClick }) {
   return (
     <section
       id="recipients"
@@ -1453,7 +1483,7 @@ function RecipientsPage() {
             href="#scholarships"
             onClick={(event) => {
               event.preventDefault();
-              scrollToSection('scholarships');
+              onNavClick('scholarships');
             }}
             className={`${CTA_BASE} ${CTA_VARIANTS.solid} ${CTA_SIZES.md} w-full sm:w-auto`}
           >
@@ -1464,7 +1494,7 @@ function RecipientsPage() {
             href="#scholarship-portal"
             onClick={(event) => {
               event.preventDefault();
-              scrollToSection('scholarship-portal');
+              onNavClick('scholarship-portal');
             }}
             className={`${CTA_BASE} ${CTA_VARIANTS.outline} ${CTA_SIZES.md} w-full sm:w-auto`}
           >
@@ -1586,11 +1616,67 @@ export default function FearsFoundationPage() {
   );
   const activeSection = useActiveSection(sectionIds);
 
-  const onRouteChange = useCallback(() => {
-    window.scrollTo({ top: 0, behavior: 'auto' });
+  /* Jump to a section once it exists. Covers the recipients -> home flip, where
+     the target only mounts after the route change commits. Instant (not smooth):
+     smooth-scrolling thousands of pixels across a page switch feels broken, and
+     an in-flight smooth scroll can swallow the jump. */
+  const jumpToSection = useCallback((id) => {
+    let tries = 0;
+    const attempt = () => {
+      const target = document.getElementById(id);
+      if (target) {
+        window.scrollTo({
+          top: target.getBoundingClientRect().top + window.scrollY - NAV_OFFSET_PX,
+          behavior: 'auto',
+        });
+      } else if (tries++ < 40) {
+        requestAnimationFrame(attempt);
+      }
+    };
+    requestAnimationFrame(attempt);
   }, []);
 
-  const route = useHashRoute(onRouteChange);
+  const onRouteChange = useCallback(() => {
+    /* Real hash changes (back/forward buttons, direct URL edits, and the
+       recipients links that still assign location.hash). Entering recipients
+       lands at the top; arriving on a home section jumps to it. */
+    const hash = window.location.hash;
+    if (hash === '#recipients') {
+      window.scrollTo({ top: 0, behavior: 'auto' });
+    } else if (hash.startsWith('#') && hash.length > 1) {
+      jumpToSection(hash.slice(1));
+    }
+  }, [jumpToSection]);
+
+  const [route, navigate] = useHashRoute(onRouteChange);
+
+  const goTo = useCallback(
+    (id) => {
+      if (id === 'recipients') {
+        if (window.location.hash !== '#recipients') navigate('recipients');
+        window.scrollTo({ top: 0, behavior: 'auto' });
+        return;
+      }
+
+      const targetHash = `#${id}`;
+      /* Same-route anchor click: the section already exists, scroll directly. */
+      if (route === 'home' && window.location.hash === targetHash) {
+        scrollToSection(id);
+        return;
+      }
+
+      navigate(id);
+      jumpToSection(id);
+    },
+    [route, navigate, jumpToSection],
+  );
+
+  /* Deep-link support: an initial hash like #timeline or #recipients resolves
+     after first render (the native fragment scroll can miss the late mount). */
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (hash && hash !== '#recipients') jumpToSection(hash.slice(1));
+  }, [jumpToSection]);
 
   /* Nav highlight: recipients route pins the Recipients link; otherwise the
      section observer owns the highlight. */
@@ -1598,11 +1684,11 @@ export default function FearsFoundationPage() {
 
   return (
     <div className="min-h-screen bg-canvas">
-      <Navbar activeId={activeId} />
+      <Navbar activeId={activeId} onNavClick={goTo} />
 
       {route === 'recipients' ? (
         <main id="main">
-          <RecipientsPage />
+          <RecipientsPage onNavClick={goTo} />
         </main>
       ) : (
         <main id="main">
