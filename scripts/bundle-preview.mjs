@@ -33,11 +33,11 @@ const html = shell
      contains `$'`, `$&` and other dollar-patterns that a string replacement
      would silently reinterpret as match back-references, corrupting the bundle. */
   .replace(
-    /\s*<link rel="stylesheet" href="\.\/dist\/app\.css" \/>/,
+    /\s*<link rel="stylesheet" href="\.\/dist\/app\.css(?:\?[^"]*)?" \/>/,
     () => `\n    <style>\n${css}\n    </style>`,
   )
   .replace(
-    /\s*<script src="\.\/dist\/app\.js" defer><\/script>/,
+    /\s*<script src="\.\/dist\/app\.js(?:\?[^"]*)?" defer><\/script>/,
     () => `\n    <script>\n${js}\n    </script>`,
   )
   /* Inline the favicon too, so the preview keeps zero external sub-resources. */
