@@ -57,8 +57,32 @@ const NAV_LINKS = [
   { id: 'scholarship-portal', label: 'Apply' },
 ];
 
-/** The six disciplines that define the brief. */
-const CREDENTIAL_MARKS = ['JD', 'PhD', 'Scientist', 'Attorney', 'Entrepreneur', 'Educator'];
+/* Founder disciplines. Per client direction: framed as a regulatory expert. */
+const CREDENTIAL_MARKS = [
+  'JD',
+  'PhD',
+  'Scientist',
+  'Regulatory Expert',
+  'Educator',
+  'Entrepreneur',
+];
+
+/* Stock photography (Unsplash, free license). Centralised so swapping in the
+   client's own photography later is a one-place change. */
+const IMAGES = {
+  hero: {
+    url: 'https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=1100&q=75',
+    alt: 'Students learning together in a classroom',
+  },
+  foundation: {
+    url: 'https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&w=1600&q=70',
+    alt: 'A student at work in a science laboratory',
+  },
+  recipients: {
+    url: 'https://images.unsplash.com/photo-1580894732930-0babd100d356?auto=format&fit=crop&w=1400&q=70',
+    alt: 'A mentor guiding a student through a lesson',
+  },
+};
 
 const HERO_STATS = [
   {
@@ -67,7 +91,7 @@ const HERO_STATS = [
     detail: 'Science, law, manufacturing & regulatory compliance',
   },
   {
-    value: '06',
+    value: '07',
     label: 'Scholarship programs',
     detail: 'From K-12 students through graduate law study',
   },
@@ -252,11 +276,11 @@ const SCHOLARSHIP_CARDS = [
     kicker: 'K-12 & Community Impact',
     title: 'K-12 & Community Impact',
     description:
-      'Early-stage support that reduces financial barriers for students before college, widening the range of career paths they can reach.',
+      'Private K-12 education for students who otherwise could not afford it, including learners with learning challenges and children from single-parent homes.',
     awards: [
       {
         name: 'Dr. Constance Y. Fears Scholarship',
-        institution: 'K-12 Students',
+        institution: 'Private K-12 Students',
       },
     ],
     impact: {
@@ -264,6 +288,15 @@ const SCHOLARSHIP_CARDS = [
       fields: ['Respiratory Therapy', 'Nursing', 'Aviation Science & Management'],
     },
     cta: { label: 'Apply Now', href: '#scholarship-portal' },
+  },
+  {
+    id: 'cert',
+    kicker: 'Career & Certification Hub',
+    title: 'Industry Certification Scholarships',
+    description:
+      'A new program supporting new college graduates and entrepreneurs as they earn the industry certifications that open early-career doors.',
+    note: 'Program details are being finalized and will be announced here.',
+    cta: { label: 'Learn Requirements', href: '#scholarship-portal' },
   },
 ];
 
@@ -984,27 +1017,24 @@ function ProfileHero() {
             <h1
               id="hero-heading"
               /* Fluid ramp: holds at 2.05rem on a 320px phone, scales to the 4.25rem
-                 desktop cap by ~790px, so no breakpoint ever clips the name.
-                 Uniform face per review: no serif accent on the surname. */
+                 desktop cap by ~790px, so no breakpoint ever clips the message.
+                 Foundation-first per client: the large type belongs to the
+                 mission, the founder's name sits beneath as a quiet subline. */
               className="mt-6 text-[clamp(2.05rem,8.6vw,4.25rem)] font-semibold leading-[1.03] tracking-[-0.03em] text-ink"
             >
-              Dr. Constance
-              <br className="hidden sm:block" /> Y. Fears
-              <span className="mt-4 block font-caps text-[13px] font-medium uppercase tracking-[0.28em] text-plum-glow sm:text-sm">
-                JD · PhD
-              </span>
+              Education for every{' '}
+              <span className="font-display italic font-normal text-plum-glow">learner.</span>
             </h1>
 
-            <p className="mt-7 max-w-2xl text-[15.5px] leading-[1.75] text-silver sm:text-[17px]">
-              A scientist, attorney, educator, entrepreneur, mentor, and advocate for expanding
-              access to education, with an interdisciplinary career spanning science, law, higher
-              education, pharmaceutical manufacturing, regulatory compliance, and entrepreneurship.
+            <p className="mt-5 font-caps text-[12px] font-medium uppercase tracking-[0.26em] text-silver sm:text-[13px]">
+              Founded by Dr. Constance Y. Fears, JD, PhD
             </p>
 
-            <p className="mt-4 max-w-2xl text-[14px] leading-[1.75] text-muted">
-              A native of Birmingham, Alabama, Dr. Fears has built her career on a lifelong
-              commitment to learning, and now on removing the barriers that stand between students
-              and their own ambitions.
+            <p className="mt-7 max-w-2xl text-[15.5px] leading-[1.75] text-silver sm:text-[17px]">
+              The Fears Foundation opens the door to education for learners who might otherwise be
+              left outside it: private K-12 schooling for children who could not afford it, students
+              with learning challenges, and children from single-parent homes. We champion the
+              fields that shape our future, from STEM to the law.
             </p>
 
             {/* Credential marks */}
@@ -1062,9 +1092,12 @@ function ProfileHero() {
             </dl>
           </div>
 
-          {/* ---- Right: credential rail (split-screen) ---- */}
+          {/* ---- Right: imagery (split-screen) ---- */}
           <div className="lg:col-span-5 lg:border-l lg:border-ink/[0.06] lg:pl-16 xl:col-span-5">
-            <CredentialRail />
+            <PhotoPanel
+              image={IMAGES.hero}
+              caption="From the first classroom to the first career, every learner deserves a path."
+            />
           </div>
         </div>
       </div>
@@ -1072,9 +1105,78 @@ function ProfileHero() {
   );
 }
 
+/** Bordered photo card with a caption bar - used for the split-screen and
+    full-width imagery. Stock photos centralised in IMAGES for easy swapping. */
+function PhotoPanel({ image, caption }) {
+  return (
+    <figure className="overflow-hidden rounded-card border border-ink/[0.08] bg-white/80 shadow-card">
+      <div className="aspect-[4/5] w-full overflow-hidden bg-inset">
+        <img
+          src={image.url}
+          alt={image.alt}
+          loading="eager"
+          className="h-full w-full object-cover"
+        />
+      </div>
+      <figcaption className="border-t border-ink/[0.06] p-5">
+        <p className="text-[12.5px] leading-relaxed text-silver">{caption}</p>
+      </figcaption>
+    </figure>
+  );
+}
+
 /* ==========================================================================
    § 6 - THE POLYMATH TIMELINE
    ========================================================================== */
+
+/* The founder's story, kept deliberately quieter than the mission. Per client
+   direction: framed exclusively as a regulatory expert. */
+function FounderSection() {
+  return (
+    <section
+      id="founder"
+      aria-labelledby="founder-heading"
+      className="relative scroll-mt-24 overflow-hidden border-b border-ink/[0.06] py-20 lg:py-28"
+    >
+      <PlumGlow className="-right-32 top-1/4 h-[440px] w-[440px] opacity-40" />
+
+      <div className="shell relative">
+        <div className="grid grid-cols-1 items-start gap-12 lg:grid-cols-12 lg:gap-16">
+          {/* Narrative */}
+          <div className="lg:col-span-5">
+            <Eyebrow>The Founder</Eyebrow>
+            <h2
+              id="founder-heading"
+              className="mt-5 text-balance text-3xl font-semibold leading-[1.08] tracking-tight text-ink sm:text-4xl"
+            >
+              Dr. Constance Y. Fears,{' '}
+              <span className="font-display italic font-normal text-plum-glow">JD, PhD</span>
+            </h2>
+
+            <p className="mt-6 text-[15px] leading-[1.85] text-silver">
+              A scientist, regulatory expert, educator, and entrepreneur, Dr. Fears built her career
+              across research science, pharmaceutical regulation, and higher education. She earned a
+              B.S. from Florida State University, a Ph.D. in Cell &amp; Molecular Biology from the
+              University of Alabama at Birmingham School of Medicine, a Juris Doctor from the
+              University of Texas School of Law, and a graduate diploma in International and French
+              Law from Université Jean Moulin III in Lyon, France.
+            </p>
+
+            <p className="mt-4 text-[14px] leading-[1.75] text-muted">
+              A native of Birmingham, Alabama, Dr. Fears now lives in the Atlanta, Georgia area. The
+              Fears Foundation is where that expertise becomes a doorway for other learners.
+            </p>
+          </div>
+
+          {/* Credentials */}
+          <div className="lg:col-span-7">
+            <CredentialRail />
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
 
 /* The dedicated Our Foundation section - motto display plus the five belief
    paragraphs, on the editorial side (Decide/Learn) and intentionally airy. */
@@ -1138,6 +1240,23 @@ function FoundationSection() {
             {closingParagraph}
           </p>
         </div>
+
+        <figure className="mt-14 overflow-hidden rounded-card border border-ink/[0.08] bg-white/80 shadow-card">
+          <div className="h-64 w-full overflow-hidden bg-inset lg:h-80">
+            <img
+              src={IMAGES.foundation.url}
+              alt={IMAGES.foundation.alt}
+              loading="lazy"
+              className="h-full w-full object-cover"
+            />
+          </div>
+          <figcaption className="border-t border-ink/[0.06] p-5">
+            <p className="text-[12.5px] leading-relaxed text-silver">
+              STEM classrooms, law school libraries, first days of school: this is what the Fears
+              Foundation funds.
+            </p>
+          </figcaption>
+        </figure>
       </div>
     </section>
   );
@@ -1224,9 +1343,6 @@ function ImpactWidget({ heading, fields }) {
         <p className="text-[10.5px] font-semibold uppercase tracking-eyebrow text-plum-light">
           {heading}
         </p>
-        <span className="font-mono text-[10px] tracking-[0.18em] text-muted">
-          {String(fields.length).padStart(2, '0')}
-        </span>
       </div>
 
       <ul className="mt-3.5 grid grid-cols-1 gap-1.5">
@@ -1291,16 +1407,25 @@ function ScholarshipCard({ card }) {
         <p className="mt-3.5 text-[13.5px] leading-relaxed text-silver">{card.description}</p>
       </header>
 
-      <ul className="relative mt-6 divide-y divide-ink/10 border-t border-ink/10">
-        {card.awards.map((award) => (
-          <li key={`${award.name}-${award.institution}`} className="py-3.5">
-            <p className="text-[13.5px] font-medium leading-snug text-ink/90">{award.name}</p>
-            <p className="mt-1.5 text-[11.5px] uppercase tracking-[0.12em] text-muted">
-              {award.institution}
-            </p>
-          </li>
-        ))}
-      </ul>
+      {card.awards ? (
+        <ul className="relative mt-6 divide-y divide-ink/10 border-t border-ink/10">
+          {card.awards.map((award) => (
+            <li key={`${award.name}-${award.institution}`} className="py-3.5">
+              <p className="text-[13.5px] font-medium leading-snug text-ink/90">{award.name}</p>
+              <p className="mt-1.5 text-[11.5px] uppercase tracking-[0.12em] text-muted">
+                {award.institution}
+              </p>
+            </li>
+          ))}
+        </ul>
+      ) : card.note ? (
+        <div className="mt-6 rounded-sharp border border-plum/15 bg-plum/[0.05] p-4">
+          <p className="text-[10.5px] font-semibold uppercase tracking-eyebrow text-plum-light">
+            New Program
+          </p>
+          <p className="mt-2 text-[12.5px] leading-relaxed text-silver">{card.note}</p>
+        </div>
+      ) : null}
 
       {card.impact ? (
         <ImpactWidget heading={card.impact.heading} fields={card.impact.fields} />
@@ -1347,7 +1472,7 @@ function FoundationHub() {
           lede="Supporting students at every stage of the academic journey: reducing financial barriers, creating educational opportunities, and encouraging ambitious academic and professional goals."
         />
 
-        <div className="mt-14 grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-7">
+        <div className="mt-14 grid grid-cols-1 gap-6 md:grid-cols-2 lg:gap-7">
           {SCHOLARSHIP_CARDS.map((card) => (
             <ScholarshipCard key={card.id} card={card} />
           ))}
@@ -1472,7 +1597,24 @@ function RecipientsPage({ onNavClick }) {
           lede="In 2023, scholarship recipients pursued fields including Respiratory Therapy, Nursing, and Aviation Science & Management, demonstrating the range of students and career paths this support has helped advance."
         />
 
-        <div className="mt-14 grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-7">
+        <figure className="mt-12 overflow-hidden rounded-card border border-ink/[0.08] bg-white/80 shadow-card">
+          <div className="h-56 w-full overflow-hidden bg-inset lg:h-64">
+            <img
+              src={IMAGES.recipients.url}
+              alt={IMAGES.recipients.alt}
+              loading="lazy"
+              className="h-full w-full object-cover"
+            />
+          </div>
+          <figcaption className="border-t border-ink/[0.06] p-4">
+            <p className="text-[12px] leading-relaxed text-silver">
+              What support looks like: someone who believed in you, at the moment you needed it
+              most.
+            </p>
+          </figcaption>
+        </figure>
+
+        <div className="mt-10 grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-7">
           {RECIPIENTS.map((recipient, index) => (
             <RecipientCard key={recipient.name} recipient={recipient} index={index} />
           ))}
@@ -1531,8 +1673,8 @@ function FoundationFooter() {
               </span>
             </div>
             <p className="mt-5 max-w-sm text-[13px] leading-relaxed text-silver">
-              Dr. Constance Y. Fears, JD, PhD: scientist, attorney, educator, entrepreneur, mentor,
-              and advocate for expanding access to education.
+              Dr. Constance Y. Fears, JD, PhD: scientist, regulatory expert, educator, entrepreneur,
+              mentor, and advocate for expanding access to education.
             </p>
             <p className="mt-4 font-mono text-[10.5px] uppercase tracking-[0.18em] text-muted">
               Atlanta, Georgia
@@ -1694,6 +1836,7 @@ export default function FearsFoundationPage() {
         <main id="main">
           <ProfileHero />
           <FoundationSection />
+          <FounderSection />
           <PolymathTimeline />
           <FoundationHub />
         </main>
