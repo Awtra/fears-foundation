@@ -1,7 +1,7 @@
 /**
  * =============================================================================
  *  THE FEARS FOUNDATION - biography & scholarship portfolio
- *  Dr. Constance Y. Fears, JD, PhD
+ *  Constance Y. Fears, JD, PhD
  * =============================================================================
  *
  *  Surface archetype:  DECIDE / LEARN  (one idea per section; a hero is correct)
@@ -14,7 +14,6 @@
  *    - Hero name set uniformly (no serif italic); serif accents reserved for
  *      section headlines where emphasis is earned
  *    - Type system: Manrope (UI) + Fraunces (display) + Jost (wide-tracked caps)
- *    - Timeline discipline numbers replaced with inline SVG glyphs
  *    - One consistent eyebrow/subheading color across every section
  *    - Mission statement (draft) + mission pull-quote treatment
  *    - "SCHOLARSHIPS OPEN" banner band (from the review's font reference)
@@ -26,7 +25,6 @@
  *    § 3  Composition primitives             (Eyebrow, SectionHeading, Tag, CTA, Glow)
  *    § 4  Global navigation                  (sticky + backdrop-blur + mobile drawer)
  *    § 5  Profile hero                       (split-screen, uniform name)
- *    § 6  The Polymath Timeline              (3-track rail, discipline glyphs)
  *    § 7  The Fears Foundation Hub           (3-card portfolio + impact sub-widget)
  *    § 8  Scholarship Recipients             (hash-routed page, 2023 testimonials)
  *    § 9  Personal footer block
@@ -50,7 +48,6 @@ const NAV_OFFSET_PX = 76;
 const NAV_LINKS = [
   { id: 'about', label: 'About' },
   { id: 'foundation', label: 'Foundation' },
-  { id: 'timeline', label: 'Timeline' },
   { id: 'scholarships', label: 'Scholarships' },
   { id: 'recipients', label: 'Recipients', page: true },
   /* Apply targets the SCHOLARSHIPS OPEN band itself (id scholarship-portal). */
@@ -146,88 +143,6 @@ const PRACTICE_SNAPSHOT = [
   { role: 'CEO & Principal Consultant', meta: 'Polymath Regulatory Consultants, LLC' },
   { role: 'Adjunct Regulatory Professor', meta: 'Morehouse School of Medicine' },
   { role: 'Global subject-matter expert', meta: 'cGMP & quality systems' },
-];
-
-/* Timeline discipline glyphs are keyed by track id in §3. */
-const TIMELINE_TRACKS = [
-  {
-    id: 'science',
-    name: 'Science',
-    summary: 'From the bench to the federal regulator',
-    entries: [
-      {
-        title: 'B.S., Biological Sciences',
-        org: 'Florida State University',
-        note: 'The start of a lifelong commitment to learning and achievement.',
-      },
-      {
-        title: 'Ph.D., Cell & Molecular Biology',
-        org: 'University of Alabama at Birmingham, School of Medicine',
-        note: 'Concentration in Cancer Biology.',
-      },
-      {
-        title: 'Postdoctoral Research Fellow',
-        org: 'Molecular Biology',
-      },
-      {
-        title: 'Certified U.S. FDA Drug Investigator',
-        org: 'Federal government service',
-      },
-      {
-        title: 'Published Researcher',
-        org: 'Biochemistry · Cancer research · Molecular biology',
-      },
-    ],
-  },
-  {
-    id: 'law',
-    name: 'Law',
-    summary: 'Jurisprudence applied to regulated industry',
-    entries: [
-      {
-        title: 'Juris Doctor',
-        org: 'University of Texas School of Law',
-      },
-      {
-        title: 'Graduate Diploma, International & French Law',
-        org: 'Université Jean Moulin III, Lyon, France',
-      },
-      {
-        title: 'Regulatory & Compliance Practice',
-        org: 'Pharmaceuticals · APIs · Vaccines · Advanced therapies · Medical devices',
-        note: 'Translating legal frameworks into manufacturing-grade quality systems.',
-      },
-    ],
-  },
-  {
-    id: 'industry',
-    name: 'Industry & Academia',
-    summary: 'Compliance leadership, teaching, and enterprise',
-    entries: [
-      {
-        title: 'CEO & Principal Consultant',
-        org: 'Polymath Regulatory Consultants, LLC',
-        note: 'Two decades of scientific, legal, manufacturing & regulatory experience, applied to complex quality and compliance challenges.',
-      },
-      {
-        title: 'Senior Quality Compliance Leader',
-        org: "One of the world's largest pharmaceutical manufacturers",
-      },
-      {
-        title: 'Global Subject-Matter Expert',
-        org: 'Current Good Manufacturing Practices & quality systems',
-      },
-      {
-        title: 'Adjunct Regulatory Professor',
-        org: 'Morehouse School of Medicine',
-        note: 'Regulatory and medical-device topics for students and industry professionals.',
-      },
-      {
-        title: 'Conference Presenter',
-        org: 'American Society for Quality',
-      },
-    ],
-  },
 ];
 
 const SCHOLARSHIP_CARDS = [
@@ -633,88 +548,6 @@ function PlumGlow({ className = '' }) {
   );
 }
 
-/* ------------------------------------------------------------------
-   Timeline discipline glyphs - inline SVG, 1.5px stroke, currentColor.
-   Replaces the 01/02/03 mono indices per client review (point 8).
-   ------------------------------------------------------------------ */
-
-function FlaskGlyph() {
-  return (
-    <svg
-      aria-hidden="true"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className="h-[18px] w-[18px]"
-    >
-      <path d="M9.5 3h5" />
-      <path d="M10.5 3v5.4L4.9 17.2A2 2 0 0 0 6.6 20h10.8a2 2 0 0 0 1.7-2.8L13.5 8.4V3" />
-      <path d="M7.3 14.5h9.4" />
-    </svg>
-  );
-}
-
-function ScalesGlyph() {
-  return (
-    <svg
-      aria-hidden="true"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className="h-[18px] w-[18px]"
-    >
-      <path d="M12 3v18" />
-      <path d="M7 21h10" />
-      <path d="M7.5 6.5 4.6 12a2.4 2.4 0 0 0 5.8 0l-2.9-5.5Z" />
-      <path d="M16.5 6.5 13.6 12a2.4 2.4 0 0 0 5.8 0l-2.9-5.5Z" />
-    </svg>
-  );
-}
-
-function FactoryGlyph() {
-  return (
-    <svg
-      aria-hidden="true"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className="h-[18px] w-[18px]"
-    >
-      <path d="M3 21V9.5l5 3V9.5l5 3V9.5l5 3V21" />
-      <path d="M3 21h18" />
-      <path d="M7 17h2M11.5 17h2M16 17h2" />
-      <path d="M7 12.5v-2M7 9.5v-2" />
-    </svg>
-  );
-}
-
-const TRACK_GLYPHS = {
-  science: FlaskGlyph,
-  law: ScalesGlyph,
-  industry: FactoryGlyph,
-};
-
-function TrackGlyph({ id }) {
-  const Glyph = TRACK_GLYPHS[id] ?? FlaskGlyph;
-  return (
-    <span
-      aria-hidden="true"
-      className="grid h-8 w-8 shrink-0 place-items-center rounded-sharp border border-plum/25 bg-plum/[0.07] text-plum-light"
-    >
-      <Glyph />
-    </span>
-  );
-}
-
 /* ==========================================================================
    § 4 - GLOBAL NAVIGATION
    ========================================================================== */
@@ -1027,7 +860,7 @@ function ProfileHero() {
             </h1>
 
             <p className="mt-5 font-caps text-[12px] font-medium uppercase tracking-[0.26em] text-silver sm:text-[13px]">
-              Founded by Dr. Constance Y. Fears, JD, PhD
+              Founded by Constance Y. Fears, JD, PhD
             </p>
 
             <p className="mt-7 max-w-2xl text-[15.5px] leading-[1.75] text-silver sm:text-[17px]">
@@ -1060,14 +893,14 @@ function ProfileHero() {
                 <ArrowGlyph />
               </a>
               <a
-                href="#timeline"
+                href="#recipients"
                 onClick={(event) => {
                   event.preventDefault();
-                  scrollToSection('timeline');
+                  goToRecipients();
                 }}
                 className={`${CTA_BASE} ${CTA_VARIANTS.outline} ${CTA_SIZES.lg} w-full sm:w-auto`}
               >
-                Explore Her Timeline
+                Meet the Recipients
               </a>
             </div>
 
@@ -1126,7 +959,7 @@ function PhotoPanel({ image, caption }) {
 }
 
 /* ==========================================================================
-   § 6 - THE POLYMATH TIMELINE
+   § 6 - THE FOUNDER & OUR FOUNDATION
    ========================================================================== */
 
 /* The founder's story, kept deliberately quieter than the mission. Per client
@@ -1149,12 +982,12 @@ function FounderSection() {
               id="founder-heading"
               className="mt-5 text-balance text-3xl font-semibold leading-[1.08] tracking-tight text-ink sm:text-4xl"
             >
-              Dr. Constance Y. Fears,{' '}
+              Constance Y. Fears,{' '}
               <span className="font-display italic font-normal text-plum-glow">JD, PhD</span>
             </h2>
 
             <p className="mt-6 text-[15px] leading-[1.85] text-silver">
-              A scientist, regulatory expert, educator, and entrepreneur, Dr. Fears built her career
+              A scientist, regulatory expert, educator, and entrepreneur, she built her career
               across research science, pharmaceutical regulation, and higher education. She earned a
               B.S. from Florida State University, a Ph.D. in Cell &amp; Molecular Biology from the
               University of Alabama at Birmingham School of Medicine, a Juris Doctor from the
@@ -1163,8 +996,8 @@ function FounderSection() {
             </p>
 
             <p className="mt-4 text-[14px] leading-[1.75] text-muted">
-              A native of Birmingham, Alabama, Dr. Fears now lives in the Atlanta, Georgia area. The
-              Fears Foundation is where that expertise becomes a doorway for other learners.
+              A native of Birmingham, Alabama, she now lives in the Atlanta, Georgia area. The Fears
+              Foundation is where that expertise becomes a doorway for other learners.
             </p>
           </div>
 
@@ -1257,76 +1090,6 @@ function FoundationSection() {
             </p>
           </figcaption>
         </figure>
-      </div>
-    </section>
-  );
-}
-
-function TimelineTrack({ track }) {
-  return (
-    <article
-      aria-labelledby={`track-${track.id}`}
-      className="flex h-full flex-col border-t border-ink/[0.08] pt-7 lg:border-t-0 lg:border-l lg:border-ink/[0.06] lg:pl-8 lg:pt-0 lg:first:border-l-0 lg:first:pl-0"
-    >
-      <div className="flex items-center gap-3">
-        <TrackGlyph id={track.id} />
-        <h3
-          id={`track-${track.id}`}
-          className="text-[15px] font-semibold uppercase tracking-[0.14em] text-ink"
-        >
-          {track.name}
-        </h3>
-      </div>
-      <p className="mt-2 text-[12.5px] leading-relaxed text-muted">{track.summary}</p>
-
-      <ol className="relative mt-8 space-y-7 border-l border-ink/[0.1] pl-6">
-        {track.entries.map((entry, index) => (
-          <li key={`${track.id}-${entry.title}-${index}`} className="relative">
-            <span
-              aria-hidden="true"
-              className="absolute -left-[29px] top-1.5 block h-[9px] w-[9px] rounded-sharp border border-plum/50 bg-plum/80 animate-pulse-node"
-            />
-            <p className="text-[14px] font-semibold leading-snug text-ink">{entry.title}</p>
-            <p className="mt-1.5 text-[12.5px] leading-relaxed text-silver">{entry.org}</p>
-            {entry.note ? (
-              <p className="mt-2 text-[12px] leading-relaxed text-muted">{entry.note}</p>
-            ) : null}
-          </li>
-        ))}
-      </ol>
-    </article>
-  );
-}
-
-function PolymathTimeline() {
-  return (
-    <section
-      id="timeline"
-      aria-labelledby="timeline-heading"
-      className="relative scroll-mt-24 overflow-hidden border-b border-ink/[0.06] py-20 lg:py-28"
-    >
-      <PlumGlow className="-left-40 top-1/3 h-[440px] w-[440px] opacity-40" />
-
-      <div className="shell relative">
-        <SectionHeading
-          id="timeline-heading"
-          eyebrow="The Polymath Timeline"
-          title="One career,"
-          accent="three disciplines"
-          lede="Research science, legal training, and regulated industry are usually separate résumés. In Dr. Fears' record they are a single continuous line of inquiry, each discipline sharpening the next."
-        />
-
-        <div className="mt-14 grid grid-cols-1 gap-12 lg:grid-cols-3 lg:gap-0">
-          {TIMELINE_TRACKS.map((track) => (
-            <TimelineTrack key={track.id} track={track} />
-          ))}
-        </div>
-
-        <p className="mt-14 border-t border-ink/[0.06] pt-6 text-[12.5px] leading-relaxed text-muted">
-          Additional academic service: Adjunct Regulatory Professor at Morehouse School of Medicine,
-          teaching regulatory and medical-device topics to students and industry professionals, and
-          presenting through the American Society for Quality.
-        </p>
       </div>
     </section>
   );
@@ -1673,7 +1436,7 @@ function FoundationFooter() {
               </span>
             </div>
             <p className="mt-5 max-w-sm text-[13px] leading-relaxed text-silver">
-              Dr. Constance Y. Fears, JD, PhD: scientist, regulatory expert, educator, entrepreneur,
+              Constance Y. Fears, JD, PhD: scientist, regulatory expert, educator, entrepreneur,
               mentor, and advocate for expanding access to education.
             </p>
             <p className="mt-4 font-mono text-[10.5px] uppercase tracking-[0.18em] text-muted">
@@ -1837,7 +1600,6 @@ export default function FearsFoundationPage() {
           <ProfileHero />
           <FoundationSection />
           <FounderSection />
-          <PolymathTimeline />
           <FoundationHub />
         </main>
       )}

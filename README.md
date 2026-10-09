@@ -1,6 +1,6 @@
 # The Fears Foundation - biography & scholarship portfolio
 
-A production-ready React + Tailwind CSS platform section for **Dr. Constance Y. Fears, JD, PhD**:
+A production-ready React + Tailwind CSS platform section for **Constance Y. Fears, JD, PhD**:
 global navigation, profile hero, polymath timeline, scholarship hub, and personal footer.
 
 ---
