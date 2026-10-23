@@ -35,7 +35,15 @@
  * =============================================================================
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
 /* ==========================================================================
    § 1 - DESIGN CONSTANTS & CONTENT MODEL
@@ -166,7 +174,7 @@ const SCHOLARSHIP_CARDS = [
         institution: 'Middle Georgia State University',
       },
     ],
-    cta: { label: 'Apply Now', href: '#scholarship-portal' },
+    cta: { label: 'Apply Now', kind: 'apply', href: '#apply-form' },
   },
   {
     id: 'law',
@@ -184,7 +192,7 @@ const SCHOLARSHIP_CARDS = [
         institution: 'Law Students',
       },
     ],
-    cta: { label: 'Learn Requirements', href: '#scholarship-portal' },
+    cta: { label: 'Learn Requirements', kind: 'portal', href: '#scholarship-portal' },
   },
   {
     id: 'k12',
@@ -202,7 +210,7 @@ const SCHOLARSHIP_CARDS = [
       heading: '2023 Recipient Fields',
       fields: ['Respiratory Therapy', 'Nursing', 'Aviation Science & Management'],
     },
-    cta: { label: 'Apply Now', href: '#scholarship-portal' },
+    cta: { label: 'Apply Now', kind: 'apply', href: '#apply-form' },
   },
   {
     id: 'cert',
@@ -211,7 +219,7 @@ const SCHOLARSHIP_CARDS = [
     description:
       'A new program supporting new college graduates and entrepreneurs as they earn the industry certifications that open early-career doors.',
     note: 'Program details are being finalized and will be announced here.',
-    cta: { label: 'Learn Requirements', href: '#scholarship-portal' },
+    cta: { label: 'Learn Requirements', kind: 'portal', href: '#scholarship-portal' },
   },
 ];
 
@@ -1137,6 +1145,8 @@ function ImpactWidget({ heading, fields }) {
 }
 
 function ScholarshipCard({ card }) {
+  const { openApply } = useApply();
+
   return (
     <article
       aria-labelledby={`card-${card.id}`}
@@ -1200,7 +1210,8 @@ function ScholarshipCard({ card }) {
           href={card.cta.href}
           onClick={(event) => {
             event.preventDefault();
-            scrollToSection('scholarship-portal');
+            if (card.cta.kind === 'apply') openApply();
+            else scrollToSection('scholarship-portal');
           }}
           className={`${CTA_BASE} ${CTA_VARIANTS.card} ${CTA_SIZES.md}`}
         >
@@ -1513,6 +1524,328 @@ function FoundationFooter() {
    § 10 - PAGE COMPOSITION
    ========================================================================== */
 
+/* ==========================================================================
+   § 9b - APPLICATION FORM (MODAL)
+   ========================================================================== */
+
+/** Applications are emailed to this inbox via FormSubmit. The very first
+    submission triggers a one-time activation email to that address; after the
+    activation link is confirmed, all submissions are delivered (standard
+    FormSubmit flow, no backend required). */
+const APPLY_ENDPOINT = 'https://formsubmit.co/constancefears@polymathregconsultants.com';
+
+/* Faint example inside the message box. Fades out the moment the applicant
+   focuses or types, so it never collides with real copy. */
+const MESSAGE_EXAMPLE = "Hi, my name is, and I'm applying for this scholarship because...";
+
+const ApplyContext = createContext(null);
+
+function ApplyProvider({ children }) {
+  const [open, setOpen] = useState(false);
+  const value = useMemo(
+    () => ({ open, openApply: () => setOpen(true), closeApply: () => setOpen(false) }),
+    [open],
+  );
+  return <ApplyContext.Provider value={value}>{children}</ApplyContext.Provider>;
+}
+
+function useApply() {
+  const ctx = useContext(ApplyContext);
+  if (!ctx) throw new Error('useApply must be used inside ApplyProvider');
+  return ctx;
+}
+
+function ApplyModal() {
+  const { open, closeApply } = useApply();
+  const [phase, setPhase] = useState('closed'); /* closed -> open -> closing -> closed */
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState(null);
+  const [messageFocused, setMessageFocused] = useState(false);
+  const [messageValue, setMessageValue] = useState('');
+  const firstFieldRef = useRef(null);
+
+  const close = useCallback(() => {
+    if (phase !== 'open') return;
+    setPhase('closing');
+    window.setTimeout(() => {
+      setPhase('closed');
+      setSubmitted(false);
+      setError(null);
+      setSubmitting(false);
+      setMessageValue('');
+      setMessageFocused(false);
+      closeApply();
+    }, 220);
+  }, [phase, closeApply]);
+
+  useEffect(() => {
+    if (open) setPhase('open');
+  }, [open]);
+
+  /* Escape closes the dialog, body scroll locks while it is open, and focus
+     moves to the first field on open. */
+  useEffect(() => {
+    if (phase !== 'open') return undefined;
+
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape') close();
+    };
+    document.addEventListener('keydown', onKeyDown);
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    firstFieldRef.current?.focus({ preventScroll: true });
+
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [phase, close]);
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const data = new FormData(form);
+    const payload = {
+      name: String(data.get('name') || '').trim(),
+      email: String(data.get('email') || '').trim(),
+      phone: String(data.get('phone') || '').trim(),
+      message: String(data.get('message') || '').trim(),
+    };
+
+    if (!payload.name || !payload.email || !payload.message) {
+      setError('Please add your name, email, and a short message.');
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payload.email)) {
+      setError('That email address does not look right. Please check it and try again.');
+      return;
+    }
+
+    setSubmitting(true);
+    setError(null);
+    try {
+      const response = await fetch(APPLY_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({
+          ...payload,
+          _subject: 'Fears Foundation Scholarship Application',
+          _template: 'table',
+          _captcha: 'false',
+        }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || result.success !== 'true') {
+        throw new Error(result.message || 'send failed');
+      }
+      setSubmitted(true);
+    } catch {
+      setError(
+        'Something went wrong sending your application. Please try again, or email constancefears@polymathregconsultants.com directly.',
+      );
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (phase === 'closed') return null;
+  const shown = phase === 'open';
+
+  const inputClasses =
+    'mt-2 w-full rounded-sharp border border-ink/[0.12] bg-white/80 px-4 py-3 text-[14px] text-ink placeholder:text-muted/70 focus:border-plum-glow/60 focus:outline-none focus:ring-2 focus:ring-plum-glow/20';
+
+  return (
+    <div
+      className={`fixed inset-0 z-[70] flex items-end justify-center p-4 transition-opacity duration-200 sm:items-center ${
+        shown ? 'opacity-100' : 'pointer-events-none opacity-0'
+      }`}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="apply-title"
+      aria-describedby="apply-desc"
+    >
+      {/* Scrim */}
+      <div
+        aria-hidden="true"
+        className={`absolute inset-0 bg-ink/45 backdrop-blur-sm transition-opacity duration-200 ${
+          shown ? 'opacity-100' : 'opacity-0'
+        }`}
+        onClick={close}
+      />
+
+      {/* Panel */}
+      <div
+        className={`relative w-full max-w-lg overflow-hidden rounded-card border border-ink/[0.1] bg-canvas shadow-portal transition-all duration-200 ${
+          shown ? 'translate-y-0 scale-100 opacity-100' : 'translate-y-3 scale-[0.97] opacity-0'
+        }`}
+      >
+        {/* Header */}
+        <div className="flex items-start justify-between gap-4 border-b border-ink/[0.06] px-6 py-5 sm:px-8">
+          <div>
+            <p className="text-[10.5px] font-semibold uppercase tracking-eyebrow text-plum-light">
+              Scholarship Application
+            </p>
+            <h3 id="apply-title" className="mt-2 text-[20px] font-semibold tracking-tight text-ink">
+              {submitted ? 'Application sent' : 'Apply now'}
+            </h3>
+            <p id="apply-desc" className="mt-1 text-[12.5px] leading-relaxed text-muted">
+              {submitted
+                ? 'Thank you. Your application is on its way.'
+                : 'Tell us a little about yourself. The foundation will reply by email.'}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={close}
+            aria-label="Close application form"
+            className="grid h-9 w-9 shrink-0 place-items-center rounded-sharp border border-ink/[0.12] text-silver transition-colors hover:border-plum-glow/50 hover:text-ink"
+          >
+            <svg
+              aria-hidden="true"
+              viewBox="0 0 20 20"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              className="h-4 w-4"
+            >
+              <path d="M5 5l10 10M15 5L5 15" strokeLinecap="round" />
+            </svg>
+          </button>
+        </div>
+
+        {submitted ? (
+          <div className="px-6 py-10 text-center sm:px-8">
+            <span
+              aria-hidden="true"
+              className="mx-auto grid h-12 w-12 place-items-center rounded-sharp bg-plum/[0.08] text-plum-light"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                className="h-5 w-5"
+              >
+                <path d="M5 12.5l4.5 4.5L19 7.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </span>
+            <p className="mt-5 text-[13.5px] leading-relaxed text-silver">
+              Your information has been emailed to the foundation. If you applied to a specific
+              program, we will confirm next steps by email.
+            </p>
+            <button
+              type="button"
+              onClick={close}
+              className={`${CTA_BASE} ${CTA_VARIANTS.solid} ${CTA_SIZES.md} mt-7`}
+            >
+              Close
+            </button>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="px-6 py-6 sm:px-8" noValidate>
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+              <label className="block">
+                <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/80">
+                  Full name
+                </span>
+                <input
+                  ref={firstFieldRef}
+                  name="name"
+                  type="text"
+                  autoComplete="name"
+                  required
+                  placeholder="Your name"
+                  className={inputClasses}
+                />
+              </label>
+              <label className="block">
+                <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/80">
+                  Email address
+                </span>
+                <input
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  required
+                  placeholder="you@example.com"
+                  className={inputClasses}
+                />
+              </label>
+            </div>
+
+            <label className="mt-5 block">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/80">
+                Phone number{' '}
+                <span className="font-normal normal-case tracking-normal text-muted">
+                  (optional)
+                </span>
+              </span>
+              <input
+                name="phone"
+                type="tel"
+                autoComplete="tel"
+                placeholder="(555) 000-0000"
+                className={inputClasses}
+              />
+            </label>
+
+            <label className="mt-5 block">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/80">
+                Your message
+              </span>
+              <span className="relative mt-2 block">
+                <textarea
+                  name="message"
+                  rows={4}
+                  required
+                  value={messageValue}
+                  onChange={(event) => setMessageValue(event.target.value)}
+                  onFocus={() => setMessageFocused(true)}
+                  onBlur={() => setMessageFocused(false)}
+                  className={`${inputClasses} resize-none leading-relaxed`}
+                />
+                {/* Fading example: visible only while empty and unfocused */}
+                <span
+                  aria-hidden="true"
+                  className={`pointer-events-none absolute left-4 top-3 text-[14px] italic leading-relaxed text-muted/60 transition-opacity duration-200 ${
+                    messageFocused || messageValue.length > 0 ? 'opacity-0' : 'opacity-100'
+                  }`}
+                >
+                  {MESSAGE_EXAMPLE}
+                </span>
+              </span>
+            </label>
+
+            {error ? (
+              <p
+                role="alert"
+                className="mt-5 rounded-sharp border border-red-300/60 bg-red-50 px-4 py-3 text-[12.5px] leading-relaxed text-red-800"
+              >
+                {error}
+              </p>
+            ) : null}
+
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <button
+                type="submit"
+                disabled={submitting}
+                className={`${CTA_BASE} ${CTA_VARIANTS.solid} ${CTA_SIZES.lg} w-full sm:w-auto`}
+              >
+                {submitting ? 'Sending...' : 'Submit Application'}
+              </button>
+              <p className="text-[11.5px] leading-relaxed text-muted">
+                Sent directly to the foundation's inbox.
+              </p>
+            </div>
+          </form>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function FearsFoundationPage() {
   /* Memoised so the observer effect never re-subscribes on re-render. */
   const sectionIds = useMemo(
@@ -1588,23 +1921,28 @@ export default function FearsFoundationPage() {
   const activeId = route === 'recipients' ? 'recipients' : activeSection;
 
   return (
-    <div className="min-h-screen bg-canvas">
-      <Navbar activeId={activeId} onNavClick={goTo} />
+    <ApplyProvider>
+      <div className="min-h-screen bg-canvas">
+        <Navbar activeId={activeId} onNavClick={goTo} />
 
-      {route === 'recipients' ? (
-        <main id="main">
-          <RecipientsPage onNavClick={goTo} />
-        </main>
-      ) : (
-        <main id="main">
-          <ProfileHero />
-          <FoundationSection />
-          <FounderSection />
-          <FoundationHub />
-        </main>
-      )}
+        {route === 'recipients' ? (
+          <main id="main">
+            <RecipientsPage onNavClick={goTo} />
+          </main>
+        ) : (
+          <main id="main">
+            <ProfileHero />
+            <FoundationSection />
+            <FounderSection />
+            <FoundationHub />
+          </main>
+        )}
 
-      <FoundationFooter />
-    </div>
+        <FoundationFooter />
+
+        {/* Application form - opened by every "Apply Now" control */}
+        <ApplyModal />
+      </div>
+    </ApplyProvider>
   );
 }
