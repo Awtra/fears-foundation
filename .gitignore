@@ -16,3 +16,5 @@ desktop.ini
 *.log
 .env
 .env.*
+deploy/
+*.zip

@@ -1625,17 +1625,31 @@ function ApplyModal() {
 
     setSubmitting(true);
     setError(null);
+
+    /* FormSubmit is a plain form endpoint: it answers a form-encoded POST
+       (a "simple" request, no CORS preflight) far more reliably than a JSON
+       POST, which can hang waiting on a preflight. We also race the request
+       against a hard timeout so the button can never sit at "Sending..."
+       forever - if the service is slow or down, the applicant gets a clear
+       error and a direct-email fallback instead of a frozen form. */
+    const body = new URLSearchParams({
+      ...payload,
+      _subject: 'Fears Foundation Scholarship Application',
+      _template: 'table',
+      _captcha: 'false',
+    });
+
     try {
-      const response = await fetch(APPLY_ENDPOINT, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify({
-          ...payload,
-          _subject: 'Fears Foundation Scholarship Application',
-          _template: 'table',
-          _captcha: 'false',
+      const response = await Promise.race([
+        fetch(APPLY_ENDPOINT, {
+          method: 'POST',
+          headers: { Accept: 'application/json' },
+          body,
         }),
-      });
+        new Promise((_, reject) =>
+          window.setTimeout(() => reject(new Error('timeout')), 20000),
+        ),
+      ]);
       const result = await response.json().catch(() => ({}));
       if (!response.ok || result.success !== 'true') {
         throw new Error(result.message || 'send failed');
