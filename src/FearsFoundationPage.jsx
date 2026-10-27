@@ -1532,7 +1532,7 @@ function FoundationFooter() {
     submission triggers a one-time activation email to that address; after the
     activation link is confirmed, all submissions are delivered (standard
     FormSubmit flow, no backend required). */
-const APPLY_ENDPOINT = 'https://formsubmit.co/constancefears@polymathregconsultants.com';
+const APPLY_ENDPOINT = 'https://formsubmit.co/info@thefearsfoundation.org';
 
 /* Faint example inside the message box. Fades out the moment the applicant
    focuses or types, so it never collides with real copy. */
@@ -1643,7 +1643,7 @@ function ApplyModal() {
       setSubmitted(true);
     } catch {
       setError(
-        'Something went wrong sending your application. Please try again, or email constancefears@polymathregconsultants.com directly.',
+        'Something went wrong sending your application. Please try again, or email info@thefearsfoundation.org directly.',
       );
     } finally {
       setSubmitting(false);
